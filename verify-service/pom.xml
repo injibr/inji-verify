@@ -15,6 +15,11 @@
     <name>verify-service</name>
     <description>Inji verify backend server implementing the OpenId4VP flow and online verification of VC</description>
     <packaging>jar</packaging>
+    <properties>
+        <itextcore.version>8.0.3</itextcore.version>
+        <itexthtml2pdf.version>5.0.3</itexthtml2pdf.version>
+        <itext.version>5.5.13</itext.version>
+    </properties>
     <dependencies>
         <dependency>
             <groupId>com.android.identity</groupId>
@@ -123,6 +128,47 @@
             <groupId>com.google.crypto.tink</groupId>
             <artifactId>tink</artifactId>
             <version>${tink.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-webflux</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.velocity</groupId>
+            <artifactId>velocity</artifactId>
+            <version>1.7</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.velocity</groupId>
+            <artifactId>velocity-tools</artifactId>
+            <version>2.0</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>dom4j</groupId>
+                    <artifactId>dom4j</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>com.itextpdf</groupId>
+            <artifactId>itext7-core</artifactId>
+            <version>${itextcore.version}</version>
+            <type>pom</type>
+        </dependency>
+        <dependency>
+            <groupId>com.itextpdf</groupId>
+            <artifactId>html2pdf</artifactId>
+            <version>${itexthtml2pdf.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.itextpdf</groupId>
+            <artifactId>itextpdf</artifactId>
+            <version>${itext.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.itextpdf.tool</groupId>
+            <artifactId>xmlworker</artifactId>
+            <version>${itext.version}</version>
         </dependency>
     </dependencies>
     <build>
