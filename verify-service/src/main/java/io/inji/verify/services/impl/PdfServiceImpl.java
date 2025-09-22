@@ -11,8 +11,6 @@ import io.inji.verify.services.PdfService;
 import io.inji.verify.services.VcParserService;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.velocity.VelocityContext;
-import org.apache.velocity.app.Velocity;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
@@ -21,13 +19,11 @@ import org.springframework.stereotype.Service;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Properties;
 
 /**
  * Service implementation for generating PDFs from Verifiable Credentials (VCs).
@@ -101,19 +97,11 @@ public class PdfServiceImpl implements PdfService {
      */
     private ByteArrayInputStream renderPdf(Map<String, String> data, String issuerId, String credentialType) {
         try {
-           String credentialTemplate = getCredentialSupportedTemplateString(issuerId,credentialType);
-            Properties props = new Properties();
-            props.setProperty("resource.loader", "class");
-            props.setProperty("class.resource.loader.class", "org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader");
-            Velocity.init(props);
-            VelocityContext velocityContext = new VelocityContext(data);
+            String mergedHtml = getCredentialSupportedTemplateString(issuerId,credentialType); // start with the original template
 
-            // Merge the context with the template
-            StringWriter writer = new StringWriter();
-            Velocity.evaluate(velocityContext, writer, "Credential Template", credentialTemplate);
-
-            // Get the merged HTML string
-            String mergedHtml = writer.toString();
+            for (String key : data.keySet()) {
+                mergedHtml = mergedHtml.replaceAll("REPLACEME-->" + key, data.get(key));
+            }
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
             PdfWriter pdfwriter = new PdfWriter(outputStream);
