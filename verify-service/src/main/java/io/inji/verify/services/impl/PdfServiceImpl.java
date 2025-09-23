@@ -33,8 +33,6 @@ import java.util.*;
 @Slf4j
 @Service
 public class PdfServiceImpl implements PdfService {
-    @Value("${mosip.openid.htmlTemplate}")
-    private String credentialTemplatePath;
 
     private final VcParserService vcParserService;
 
@@ -50,12 +48,6 @@ public class PdfServiceImpl implements PdfService {
         this.vcParserService = vcParserService;
     }
 
-
-    @PostConstruct
-    public void setUp() throws IOException {
-            Resource credentialTemplateResource = new ClassPathResource("templates/"+ credentialTemplatePath);
-            credentialTemplateHtmlString = (Files.readString(credentialTemplateResource.getFile().toPath()));
-    }
 
     /**
      * Retrieves the HTML template string for a given issuer ID and credential type.
