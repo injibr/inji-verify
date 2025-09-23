@@ -22,8 +22,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * Service implementation for generating PDFs from Verifiable Credentials (VCs).
@@ -100,7 +99,13 @@ public class PdfServiceImpl implements PdfService {
             String mergedHtml = getCredentialSupportedTemplateString(issuerId,credentialType); // start with the original template
 
             for (String key : data.keySet()) {
-                mergedHtml = mergedHtml.replaceAll("REPLACEME-->" + key, data.get(key));
+                try{
+                    mergedHtml = mergedHtml.replaceAll("REPLACEME-->" + key, data.get(key));
+                } catch(IllegalArgumentException ex){
+                    log.error("Error while replacing key in template {}",key);
+                    // If there's an error (e.g., special characters in the value), remove the placeholder
+                  mergedHtml = mergedHtml.replaceAll("REPLACEME-->" + key, "");
+                }
             }
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
@@ -118,28 +123,39 @@ public class PdfServiceImpl implements PdfService {
     /**     * Generates a PDF from the provided verifiable credential (VC).
      *
      * @param vc the verifiable credential in JSON format
-     * @return a ByteArrayInputStream containing the generated PDF
+     * @return a List<ByteArrayInputStream> containing the generated PDF
      * @throws PdfParseException      if there is an error parsing the VC
      * @throws PdfGenerationException if there is an error generating the PDF
      */
     @Override
-    public ByteArrayInputStream generatePdf(String vc) {
+    public  Map<String,ByteArrayInputStream> generatePdf(String vc) {
         Map<String, String> credentialMap;
         String issuerId;
         String credentialType;
+        int totalVCs;
+        Map<String,ByteArrayInputStream> pdfStreams = new HashMap<>();
         try {
-            credentialMap = vcParserService.extractCredentialSubject(vc);
-            issuerId = vcParserService.getValueFromVcMetadata(vc,"issuer");
-            credentialType = vcParserService.getValueFromVcMetadata(vc,"credentialType");
+            totalVCs= vcParserService.getTotalNumberOfVc(vc);
         }catch (JsonProcessingException ex){
             log.error("Error while parsing vc",ex);
             throw new PdfParseException();
         }
-        if(!Objects.isNull(credentialMap) && !Objects.isNull(issuerId) && !Objects.isNull(credentialType)){
-            return renderPdf(credentialMap,issuerId,credentialType);
-        }else {
-            log.error("Error while generating pdf");
-            throw new PdfGenerationException();
+        for (int i = 0; i < totalVCs; i++) {
+            try {
+                credentialMap = vcParserService.extractCredentialSubject(vc, i);
+                issuerId = vcParserService.getValueFromVcMetadata(vc,"issuer", i);
+                credentialType = vcParserService.getValueFromVcMetadata(vc,"credentialType", i);
+            }catch (JsonProcessingException ex){
+                log.error("Error while parsing vc",ex);
+                throw new PdfParseException();
+            }
+            if(!Objects.isNull(credentialMap) && !Objects.isNull(issuerId) && !Objects.isNull(credentialType)){
+                pdfStreams.put(credentialType,renderPdf(credentialMap, issuerId, credentialType));
+            }else {
+                log.error("Error while generating pdf");
+                throw new PdfGenerationException();
+            }
         }
+       return pdfStreams;
     }
 }

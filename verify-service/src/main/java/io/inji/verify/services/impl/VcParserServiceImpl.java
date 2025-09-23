@@ -24,10 +24,10 @@ public class VcParserServiceImpl implements VcParserService {
      * @return A map representing the credentialSubject.
      * @throws JsonProcessingException If there is an error processing the JSON.
      */
-    public Map<String, String> extractCredentialSubject(String jsonInput) throws JsonProcessingException {
+    public Map<String, String> extractCredentialSubject(String jsonInput, int vcNumber) throws JsonProcessingException {
 
         // Navigate to credentialSubject
-        JsonNode credentialSubjectNode = getVerifiableCredentialNode(jsonInput)
+        JsonNode credentialSubjectNode = getVerifiableCredentialNode(jsonInput, vcNumber)
                 .path("verifiableCredential")
                 .path("credential")
                 .path("credentialSubject");
@@ -55,10 +55,10 @@ public class VcParserServiceImpl implements VcParserService {
      * @return The extracted value as a String.
      * @throws JsonProcessingException If there is an error processing the JSON.
      */
-    public String getValueFromVcMetadata(String jsonInput,String vcMetadataNode) throws JsonProcessingException {
+    public String getValueFromVcMetadata(String jsonInput,String vcMetadataNode,int vcNumber) throws JsonProcessingException {
 
         // Navigate to vcMetadata -> issuer
-        JsonNode issuerNode = getVerifiableCredentialNode(jsonInput)
+        JsonNode issuerNode = getVerifiableCredentialNode(jsonInput, vcNumber)
                 .path("vcMetadata")
                 .path(vcMetadataNode);
 
@@ -73,7 +73,7 @@ public class VcParserServiceImpl implements VcParserService {
         return json.replace("\t", "\\t");
     }
 
-    private JsonNode getVerifiableCredentialNode(String jsonInput) throws JsonProcessingException {
+    private JsonNode getVerifiableCredentialNode(String jsonInput, int vcNumber) throws JsonProcessingException {
         ObjectMapper mapper = new ObjectMapper();
 
         // Parse root JSON
@@ -85,11 +85,26 @@ public class VcParserServiceImpl implements VcParserService {
         }
 
         // Get the first element from "verifiableCredential" array
-        String vcEscaped = rootNode.get("verifiableCredential").get(0).asText();
+        String vcEscaped = rootNode.get("verifiableCredential").get(vcNumber).asText();
         // Unescape the string to get valid JSON
         String vcJson = StringEscapeUtils.unescapeJava(vcEscaped);
         // Parse the inner JSON
        return mapper.readTree(vcJson);
 
+    }
+
+    @Override
+    public int getTotalNumberOfVc(String jsonInput) throws JsonProcessingException {
+        ObjectMapper mapper = new ObjectMapper();
+
+        // Parse root JSON
+        JsonNode rootNode = mapper.readTree(getCorrectJsonString(jsonInput));
+
+        JsonNode vcArrayNode = rootNode.get("verifiableCredential");
+        if (vcArrayNode == null || !vcArrayNode.isArray() || vcArrayNode.isEmpty()) {
+            throw new IllegalArgumentException("verifiableCredential array is missing or empty");
+        }
+
+        return vcArrayNode.size();
     }
 }
