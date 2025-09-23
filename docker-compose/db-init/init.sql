@@ -37,13 +37,13 @@ CREATE TABLE verify.bank_credentials (
     CONSTRAINT bank_credentials_pkey PRIMARY KEY (bank_id)
 );
 
-CREATE TABLE vp_requests (
+CREATE TABLE verify.vp_requests (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     request_id VARCHAR(255) NOT NULL,
     transaction_id VARCHAR(255) NOT NULL,
     bank_credential_id VARCHAR(100) NOT NULL,
     CONSTRAINT fk_bank_credential
         FOREIGN KEY (bank_credential_id)
-        REFERENCES bank_credentials (bank_id)
+        REFERENCES verify.bank_credentials (bank_id)
         ON DELETE CASCADE
 );
