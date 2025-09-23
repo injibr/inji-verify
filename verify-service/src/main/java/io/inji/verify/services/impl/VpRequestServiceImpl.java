@@ -23,12 +23,9 @@ public class VpRequestServiceImpl implements VpRequestService {
 
     @Override
     @Transactional
-    public void saveVpRequest(String bankId, String requestId, String transactionId) {
+    public void saveVpRequest(String bankId, String bankSecret, String requestId, String transactionId) {
         // Fetch the BankCredential by bankId
-        BankCredential bankCredential = bankCredentialService.findByBankId(bankId);
-        if (Objects.isNull(bankCredential)) {
-            throw new IllegalArgumentException("BankCredential not found for bankId: " + bankId);
-        }
+        BankCredential bankCredential = validateAndGetBank(bankId,bankSecret);
 
         // Create and save VpRequest
         VpRequest vpRequest = new VpRequest();
@@ -42,5 +39,9 @@ public class VpRequestServiceImpl implements VpRequestService {
     @Override
     public VpRequest getVpRequestsByRequestId(String requestId){
         return vpRequestRepository.findByRequestId(requestId);
+    }
+
+    private BankCredential validateAndGetBank(String bankSecret,String bankId){
+        return bankCredentialService.checkIfBankSecretMatches(bankId, bankSecret);
     }
 }

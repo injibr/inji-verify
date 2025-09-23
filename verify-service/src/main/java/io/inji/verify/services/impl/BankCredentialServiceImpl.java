@@ -1,5 +1,6 @@
 package io.inji.verify.services.impl;
 
+import io.inji.verify.exception.BankCredentialException;
 import io.inji.verify.models.BankCredential;
 import io.inji.verify.repository.BankCredentialRepository;
 import io.inji.verify.services.BankCredentialService;
@@ -16,5 +17,12 @@ public class BankCredentialServiceImpl implements BankCredentialService {
     @Override
     public BankCredential findByBankId(String bankId) {
         return bankCredentialRepository.findByBankId(bankId);
+    }
+
+    @Override
+    public BankCredential checkIfBankSecretMatches(String bankId, String secret){
+        BankCredential bankCredential = bankCredentialRepository.findByBankId(bankId);
+        if(bankCredential == null || bankCredential.getBankSecret().equals(secret)) throw new BankCredentialException();
+        return bankCredential;
     }
 }
