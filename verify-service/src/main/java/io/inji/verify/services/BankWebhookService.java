@@ -10,5 +10,5 @@ import java.util.Map;
  * Service interface for handling bank webhook operations.
  */
 public interface BankWebhookService {
-    void callWebhook(Map<String,ByteArrayInputStream> pdfs, VPTokenResultDto result);
+    void callWebhook(Map<String,ByteArrayInputStream> pdfs, VPTokenResultDto result, String webhookUrl);
 }
