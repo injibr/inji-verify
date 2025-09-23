@@ -4,7 +4,6 @@ import io.inji.verify.dto.submission.VPTokenResultDto;
 import io.inji.verify.exception.BankWebHookException;
 import io.inji.verify.services.BankWebhookService;
 import org.springframework.core.io.ByteArrayResource;
-import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
@@ -12,7 +11,6 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.io.ByteArrayInputStream;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -32,10 +30,8 @@ public class BankWebhookServiceImpl implements BankWebhookService {
      * Calls the predefined webhook URL and handles the response.
      * In case of an error, it throws a BankWebHookException.
      */
-    public void callWebhook(Map<String,ByteArrayInputStream> pdfs, VPTokenResultDto result) {
+    public void callWebhook(Map<String,ByteArrayInputStream> pdfs, VPTokenResultDto result,String webhookUrl) {
         try {
-            String webhookUrl = "https://webhook.site/785f9f20-ba6d-45f3-bb7d-c2fd64f85f59";
-
             MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
             int index = 1;
             body.add("result", result);
@@ -55,23 +51,6 @@ public class BankWebhookServiceImpl implements BankWebhookService {
                         body.add(fileName, resource);
                     }
                     );
-
-//            for (ByteArrayInputStream bais : pdfs) {
-//                byte[] bytes = bais.readAllBytes(); // consume safely into memory
-//
-//                String filename = "file" + index++ + ".pdf";
-//
-//                ByteArrayResource resource = new ByteArrayResource(bytes) {
-//                    @Override
-//                    public String getFilename() {
-//                        return filename; // so webhook can display filename
-//                    }
-//                };
-//
-//                body.add("file"+index, resource);
-//            }
-
-            WebClient webClient = WebClient.builder().build();
 
             String response = webClient.post()
                     .uri(webhookUrl)

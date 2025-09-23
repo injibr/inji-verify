@@ -97,9 +97,9 @@
     <div>
         <div class="section">Informações</div>
         <div class="info-box">
-            <div><strong>Nº UFPA:</strong> $rowProperties.numeroCaf.values().iterator().next() &ensp;&ensp;&ensp;&ensp;<strong>Situação:</strong> $rowProperties.situacao.values().iterator().next()</div><br>
-            <div><strong>Data da inscrição:</strong> dataCriacao &ensp;&ensp;&ensp;&ensp;<strong>Última atualização:</strong> $rowProperties.Ultima Atualização.values().iterator().next()</div><br>
-            <div><strong>Enquadramento PRONAF:</strong> enquadramentoPronaf &ensp;&ensp;&ensp;&ensp;<strong>Data de Validade:</strong> $rowProperties.dataValidade.values().iterator().next()</div><br>
+            <div><strong>Nº UFPA:</strong> REPLACEME-->.numeroCaf &ensp;&ensp;&ensp;&ensp;<strong>Situação:</strong> REPLACEME-->.situacao</div><br>
+            <div><strong>Data da inscrição:</strong> dataCriacao &ensp;&ensp;&ensp;&ensp;<strong>Última atualização:</strong> REPLACEME-->.Ultima Atualização</div><br>
+            <div><strong>Enquadramento PRONAF:</strong> enquadramentoPronaf &ensp;&ensp;&ensp;&ensp;<strong>Data de Validade:</strong> REPLACEME-->.dataValidade</div><br>
         </div>
         <div class="qr-code">
             <img src="qr-code-placeholder.png" alt="QR Code" width="100">
@@ -113,8 +113,8 @@
                 <th class="table-header">Caracterização da UFPA</th>
             </tr>
             <tr>
-                <td>$rowProperties.atividadeprincipalUFPA.values().iterator().next()</td>
-                <td>$rowProperties.caracterizacaoArea.values().iterator().next()</td>
+                <td>REPLACEME-->.atividadeprincipalUFPA</td>
+                <td>REPLACEME-->.caracterizacaoArea</td>
             </tr>
         </table>
     </div>
@@ -132,10 +132,10 @@
             <tbody>
             #foreach($item in $sobreposicoes)
             <tr>
-                <td>$membros -> nome.values().iterator().next()</td>
-                <td>$membros -> cpf.values().iterator().next()</td>
-                <td>$membros -> tipoMembro -> descricao.values().iterator().next()</td>
-                <td>$possuiMaoObraContratada.values().iterator().next()</td>
+                <td>$membros -> nome</td>
+                <td>$membros -> cpf</td>
+                <td>$membros -> tipoMembro -> descricao</td>
+                <td>$possuiMaoObraContratada</td>
             </tr>
             #end
             </tbody>
@@ -160,17 +160,17 @@
                 <th class="table-header">Município/UF</th>
             </tr>
             <tr>
-                <td>areas -> tamanho.values().iterator().next()</td>
+                <td>areas -> tamanho</td>
                 <td>0,00</td>
-                <td>$rowProperties.municipio.values().iterator().next()</td>
+                <td>REPLACEME-->.municipio</td>
             </tr>
         </table>
     </div>
 
     <div class="section">Entidade responsável pela inscrição no CAF</div>
     <div class="box">
-        <div><strong>Entidade:</strong> entidadeEmissora -> $rowProperties.razaoSocial.values().iterator().next() &nbsp;&nbsp;&nbsp;&nbsp; <strong>CNPJ:</strong> entidadeEmissora -> cnpj.values().iterator().next()</div><br>
-        <div><strong>Cadastrador:</strong> $rowProperties.emissor.values().iterator().next()</div>
+        <div><strong>Entidade:</strong> entidadeEmissora -> REPLACEME-->.razaoSocial &nbsp;&nbsp;&nbsp;&nbsp; <strong>CNPJ:</strong> entidadeEmissora -> cnpj</div><br>
+        <div><strong>Cadastrador:</strong> REPLACEME-->.emissor</div>
     </div>
 
     <div class="section">Orientações</div>

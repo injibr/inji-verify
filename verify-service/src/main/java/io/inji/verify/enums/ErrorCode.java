@@ -9,6 +9,7 @@ import lombok.Getter;
 public enum ErrorCode {
     INVALID_TRANSACTION_ID("INVALID_TRANSACTION_ID","Invalid transaction ID, No requests found for given transaction ID."),
     NO_VP_SUBMISSION("NO_VP_SUBMISSION","No VP submission found for given transaction ID."),
+    NO_VP_REQUEST("NO_VP_REQUEST","No VP request found for given transaction ID."),
     NO_AUTH_REQUEST("NO_AUTH_REQUEST","No Authorization request found for given request ID."),
     BOTH_ID_AND_PD_CANNOT_BE_NULL("BOTH_ID_AND_PD_CANNOT_BE_NULL","Both Presentation Definition and Presentation Definition ID cannot be empty."),
     BANK_WEBHOOK_ERROR("BANK_WEBHOOK_ERROR","Error occurred while processing bank webhook."),
