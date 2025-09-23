@@ -8,8 +8,6 @@ import io.inji.verify.services.VpRequestService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Objects;
-
 @Service
 public class VpRequestServiceImpl implements VpRequestService {
     private final BankCredentialService bankCredentialService;
@@ -41,7 +39,7 @@ public class VpRequestServiceImpl implements VpRequestService {
         return vpRequestRepository.findByRequestId(requestId);
     }
 
-    private BankCredential validateAndGetBank(String bankSecret,String bankId){
+    private BankCredential validateAndGetBank(String bankId,String bankSecret){
         return bankCredentialService.checkIfBankSecretMatches(bankId, bankSecret);
     }
 }

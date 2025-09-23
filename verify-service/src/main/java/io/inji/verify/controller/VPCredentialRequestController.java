@@ -4,6 +4,7 @@ import io.inji.verify.dto.authorizationrequest.VPRequestCreateDto;
 import io.inji.verify.dto.authorizationrequest.VPRequestResponseDto;
 import io.inji.verify.dto.core.ErrorDto;
 import io.inji.verify.enums.ErrorCode;
+import io.inji.verify.exception.BankCredentialException;
 import io.inji.verify.exception.PresentationDefinitionNotFoundException;
 import io.inji.verify.services.VerifiablePresentationRequestService;
 import io.inji.verify.services.VpRequestService;
@@ -43,6 +44,9 @@ public class VPCredentialRequestController {
         } catch (PresentationDefinitionNotFoundException e) {
             log.error(e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorDto(ErrorCode.NO_PRESENTATION_DEFINITION));
+        } catch (BankCredentialException e){
+            log.error(e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorDto(ErrorCode.BANK_CREDENTIAL_ERROR));
         }
     }
 

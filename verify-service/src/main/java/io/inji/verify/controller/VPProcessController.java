@@ -1,21 +1,14 @@
 package io.inji.verify.controller;
 
-import com.nimbusds.jose.shaded.gson.Gson;
-import io.inji.verify.dto.authorizationrequest.VPRequestStatusDto;
 import io.inji.verify.dto.core.ErrorDto;
 import io.inji.verify.dto.submission.PresentationSubmissionDto;
 import io.inji.verify.dto.submission.VPSubmissionDto;
 import io.inji.verify.dto.submission.VPTokenResultDto;
-import io.inji.verify.enums.ErrorCode;
-import io.inji.verify.enums.VPResultStatus;
 import io.inji.verify.exception.BankWebHookException;
-import io.inji.verify.exception.VPSubmissionNotFoundException;
+import io.inji.verify.exception.VpRequestNotFoundException;
 import io.inji.verify.models.VpRequest;
-import io.inji.verify.services.*;
+import io.inji.verify.services.VPProcessService;
 import io.inji.verify.shared.Constants;
-import jakarta.validation.ConstraintViolation;
-import jakarta.validation.Validation;
-import jakarta.validation.Validator;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
@@ -28,10 +21,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.ByteArrayInputStream;
-import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
 
 /**
  * Controller for handling Verifiable Presentation (VP) submissions and processing.
@@ -43,25 +33,11 @@ import java.util.Set;
 @RequestMapping(path = Constants.RESPONSE_SUBMISSION_URI_ROOT)
 @Slf4j
 public class VPProcessController {
-    private final VerifiablePresentationRequestService verifiablePresentationRequestService;
+    private final VPProcessService vpProcessService;
 
-    private final VerifiablePresentationSubmissionService verifiablePresentationSubmissionService;
+    public VPProcessController(VPProcessService vpProcessService) {
+        this.vpProcessService = vpProcessService;
 
-    private final Gson gson;
-
-    private final BankWebhookService bankWebhookService;
-
-    private final PdfService pdfService;
-
-    private final VpRequestService vpRequestService;
-
-    public VPProcessController(VerifiablePresentationRequestService verifiablePresentationRequestService, VerifiablePresentationSubmissionService verifiablePresentationSubmissionService, Gson gson, BankWebhookService bankWebhookService, PdfService pdfService, VpRequestService vpRequestService) {
-        this.verifiablePresentationRequestService = verifiablePresentationRequestService;
-        this.verifiablePresentationSubmissionService = verifiablePresentationSubmissionService;
-        this.gson = gson;
-        this.bankWebhookService = bankWebhookService;
-        this.pdfService = pdfService;
-        this.vpRequestService = vpRequestService;
     }
 
     /**
@@ -76,59 +52,45 @@ public class VPProcessController {
      * @return a ResponseEntity containing the generated PDF or an error response
      */
     @PostMapping(path = "/vp-process", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
-    public ResponseEntity<?> submitVP(@NotNull @NotBlank @RequestParam(value = "vp_token") String vpToken, @NotNull @NotBlank @RequestParam(value = "presentation_submission") String presentationSubmission, @NotNull @NotBlank @RequestParam(value = "state") String state) {
-        //direct-post
-        PresentationSubmissionDto presentationSubmissionDto = gson.fromJson(presentationSubmission, PresentationSubmissionDto.class);
-        Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
-        Set<ConstraintViolation<PresentationSubmissionDto>> violations = validator.validate(presentationSubmissionDto);
-        if (!violations.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(violations.iterator().next().getMessage());
-        }
-        VPSubmissionDto vpSubmissionDto = new VPSubmissionDto(vpToken, presentationSubmissionDto, state);
-
-        VPRequestStatusDto currentVPRequestStatusDto = verifiablePresentationRequestService.getCurrentRequestStatus(vpSubmissionDto.getState());
-        if (currentVPRequestStatusDto == null) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-
-        verifiablePresentationSubmissionService.submit(vpSubmissionDto);
-
-
-//vp-result
-        VpRequest vpRequestsByRequestId = vpRequestService.getVpRequestsByRequestId(state);
-        if (Objects.isNull(vpRequestsByRequestId)) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorDto(ErrorCode.NO_VP_REQUEST));
-        }
-        List<String> requestIds = verifiablePresentationRequestService.getLatestRequestIdFor(vpRequestsByRequestId.getTransactionId());
-        VPTokenResultDto result;
-        if (!requestIds.isEmpty()) {
-            try {
-                result = verifiablePresentationSubmissionService.getVPResult(requestIds, vpRequestsByRequestId.getTransactionId());
-                if (result.getVpResultStatus() == VPResultStatus.FAILED) {
-                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorDto(ErrorCode.NO_VP_SUBMISSION));
-                }
-            } catch (VPSubmissionNotFoundException e) {
-                log.error(e.getMessage());
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorDto(ErrorCode.NO_VP_SUBMISSION));
-            }
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorDto(ErrorCode.INVALID_TRANSACTION_ID));
-        }
-
-        //Preparing pdf
-        Map<String, ByteArrayInputStream> pdfBytes = pdfService.generatePdf(vpToken);
-
-        //Calling the webhook
+    public ResponseEntity<?> submitVP(
+            @NotNull @NotBlank @RequestParam("vp_token") String vpToken,
+            @NotNull @NotBlank @RequestParam("presentation_submission") String presentationSubmission,
+            @NotNull @NotBlank @RequestParam("state") String state) {
         try {
-            bankWebhookService.callWebhook(pdfBytes, result, vpRequestsByRequestId.getBankCredential().getBankWebhookUrl());
-        } catch (BankWebHookException be) {
-            log.error(be.getMessage());
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            // Step 1: Validate presentation submission
+            PresentationSubmissionDto dto = vpProcessService.validatePresentationSubmission(presentationSubmission);
+
+            // Step 2: Verify request status
+            vpProcessService.verifyCurrentRequestStatus(state);
+
+            // Step 3: Submit VP
+            vpProcessService.submitVP(new VPSubmissionDto(vpToken, dto, state));
+
+            // Step 4: Fetch VpRequest
+            VpRequest vpRequest = vpProcessService.fetchVpRequest(state);
+
+            // Step 5: Retrieve VP result
+            VPTokenResultDto result = vpProcessService.retrieveVpResult(vpRequest);
+
+            // Step 6: Generate PDF
+            Map<String, ByteArrayInputStream> pdfs = vpProcessService.generatePdf(vpToken);
+
+            // Step 7: Call webhook
+            vpProcessService.callWebhook(pdfs, result, vpRequest.getBankCredential().getBankWebhookUrl());
+
+            // Step 8: Return final result
+            return ResponseEntity.ok(result);
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        } catch (VpRequestNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorDto(e.getErrorCode()));
+        } catch (BankWebHookException e) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body("Bank webhook failed: " + e.getMessage());
+        } catch (Exception e) {
+            log.error("Unexpected error occurred", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Unexpected server error");
         }
-
-        //Sending pdf as result
-        return ResponseEntity.status(HttpStatus.OK).body(result);
-
     }
 
 }
