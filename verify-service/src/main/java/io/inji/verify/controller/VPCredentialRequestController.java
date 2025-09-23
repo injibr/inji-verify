@@ -30,7 +30,6 @@ public class VPCredentialRequestController {
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> handleVpRequest(
-            @RequestParam String cpf,
             @RequestHeader("x-bank-id") String bankId,
             @RequestHeader("x-bank-secret") String bankSecret,
             @RequestBody VPRequestCreateDto vpRequestCreate) {
@@ -39,7 +38,7 @@ public class VPCredentialRequestController {
         }
         try {
             VPRequestResponseDto authorizationRequestResponse = verifiablePresentationRequestService.createAuthorizationRequest(vpRequestCreate);
-            vpRequestService.saveVpRequest(bankId, authorizationRequestResponse.getRequestId(), authorizationRequestResponse.getTransactionId());
+            vpRequestService.saveVpRequest(bankId,bankSecret, authorizationRequestResponse.getRequestId(), authorizationRequestResponse.getTransactionId());
             return ResponseEntity.status(HttpStatus.CREATED).body(authorizationRequestResponse);
         } catch (PresentationDefinitionNotFoundException e) {
             log.error(e.getMessage());
