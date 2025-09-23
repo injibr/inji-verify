@@ -23,14 +23,14 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * Controller for handling Verifiable Presentation (VP) submissions and processing.
@@ -92,9 +92,10 @@ public class VPProcessController {
 
 //vp-result
         List<String> requestIds = verifiablePresentationRequestService.getLatestRequestIdFor(transactionId);
+        VPTokenResultDto result;
         if (!requestIds.isEmpty()) {
             try {
-                VPTokenResultDto result = verifiablePresentationSubmissionService.getVPResult(requestIds, transactionId);
+                result = verifiablePresentationSubmissionService.getVPResult(requestIds, transactionId);
                 if(result.getVpResultStatus() == VPResultStatus.FAILED){
                     return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorDto(ErrorCode.NO_VP_SUBMISSION));
                 }
@@ -107,22 +108,19 @@ public class VPProcessController {
         }
 
         //Preparing pdf
-        ByteArrayInputStream pdfBytes = pdfService.generatePdf(vpToken);
+        Map<String,ByteArrayInputStream> pdfBytes = pdfService.generatePdf(vpToken);
 
         //Calling the webhook
         try {
-            bankWebhookService.callWebhook();
+            bankWebhookService.callWebhook(pdfBytes,result);
         }catch (BankWebHookException be){
             log.error(be.getMessage());
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
         //Sending pdf as result
-        return ResponseEntity
-                .ok()
-                .contentType(MediaType.APPLICATION_PDF)
-                .header(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, "Content-Disposition")
-                .body(new InputStreamResource(pdfBytes));
+        return ResponseEntity.status(HttpStatus.OK).body(result);
+
     }
 
 }
