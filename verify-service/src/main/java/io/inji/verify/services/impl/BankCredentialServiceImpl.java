@@ -6,6 +6,8 @@ import io.inji.verify.repository.BankCredentialRepository;
 import io.inji.verify.services.BankCredentialService;
 import org.springframework.stereotype.Service;
 
+import java.util.Objects;
+
 @Service
 public class BankCredentialServiceImpl implements BankCredentialService {
     private final BankCredentialRepository bankCredentialRepository;
@@ -22,7 +24,7 @@ public class BankCredentialServiceImpl implements BankCredentialService {
     @Override
     public BankCredential checkIfBankSecretMatches(String bankId, String secret){
         BankCredential bankCredential = bankCredentialRepository.findByBankId(bankId);
-        if(bankCredential == null || bankCredential.getBankSecret().equals(secret)) throw new BankCredentialException();
+        if(Objects.isNull(bankCredential) || !bankCredential.getBankSecret().equals(secret)) throw new BankCredentialException();
         return bankCredential;
     }
 }

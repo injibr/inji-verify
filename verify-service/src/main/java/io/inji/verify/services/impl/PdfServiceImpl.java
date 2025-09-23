@@ -116,7 +116,7 @@ public class PdfServiceImpl implements PdfService {
             HtmlConverter.convertToPdf(mergedHtml, pdfwriter, converterProperties);
             return new ByteArrayInputStream(outputStream.toByteArray());
         }catch (Exception ex){
-            throw new RuntimeException("Error while generating pdf",ex);
+            throw new PdfParseException();
         }
     }
 
