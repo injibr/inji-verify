@@ -8,7 +8,9 @@
         "purpose": "Relying party is requesting your digital ID for the purpose of Self-Authentication",
         "format": {
           "ldp_vc": {
-            "proof_type": ["Ed25519Signature2020"]
+            "proof_type": [
+              "Ed25519Signature2020"
+            ]
           }
         },
         "input_descriptors": [
@@ -16,13 +18,17 @@
             "id": "id card credential",
             "format": {
               "ldp_vc": {
-                "proof_type": ["Ed25519Signature2020"]
+                "proof_type": [
+                  "Ed25519Signature2020"
+                ]
               }
             },
             "constraints": {
               "fields": [
                 {
-                  "path": ["$.type"],
+                  "path": [
+                    "$.type"
+                  ],
                   "filter": {
                     "type": "object",
                     "pattern": "CARDocument"
@@ -42,7 +48,9 @@
         "purpose": "Relying party is requesting your digital ID for the purpose of Self-Authentication",
         "format": {
           "ldp_vc": {
-            "proof_type": ["Ed25519Signature2020"]
+            "proof_type": [
+              "Ed25519Signature2020"
+            ]
           }
         },
         "input_descriptors": [
@@ -50,13 +58,17 @@
             "id": "id card credential",
             "format": {
               "ldp_vc": {
-                "proof_type": ["Ed25519Signature2020"]
+                "proof_type": [
+                  "Ed25519Signature2020"
+                ]
               }
             },
             "constraints": {
               "fields": [
                 {
-                  "path": ["$.type"],
+                  "path": [
+                    "$.type"
+                  ],
                   "filter": {
                     "type": "object",
                     "pattern": "CARReceipt"
@@ -76,7 +88,9 @@
         "purpose": "Relying party is requesting your digital ID for the purpose of Self-Authentication",
         "format": {
           "ldp_vc": {
-            "proof_type": ["Ed25519Signature2020"]
+            "proof_type": [
+              "Ed25519Signature2020"
+            ]
           }
         },
         "input_descriptors": [
@@ -84,13 +98,17 @@
             "id": "id card credential",
             "format": {
               "ldp_vc": {
-                "proof_type": ["Ed25519Signature2020"]
+                "proof_type": [
+                  "Ed25519Signature2020"
+                ]
               }
             },
             "constraints": {
               "fields": [
                 {
-                  "path": ["$.type"],
+                  "path": [
+                    "$.type"
+                  ],
                   "filter": {
                     "type": "object",
                     "pattern": "CCIR"
@@ -104,13 +122,15 @@
     },
     {
       "logo": "/assets/cert.png",
-      "name": "InsuranceCredential",
-      "type": "InsuranceCredential",
+      "name": "CAF Credentail",
+      "type": "CAFDocument",
       "definition": {
         "purpose": "Relying party is requesting your digital ID for the purpose of Self-Authentication",
         "format": {
           "ldp_vc": {
-            "proof_type": ["Ed25519Signature2020"]
+            "proof_type": [
+              "Ed25519Signature2020"
+            ]
           }
         },
         "input_descriptors": [
@@ -118,50 +138,20 @@
             "id": "id card credential",
             "format": {
               "ldp_vc": {
-                "proof_type": ["Ed25519Signature2020"]
+                "proof_type": [
+                  "Ed25519Signature2020"
+                ]
               }
             },
             "constraints": {
               "fields": [
                 {
-                  "path": ["$.type"],
+                  "path": [
+                    "$.type"
+                  ],
                   "filter": {
                     "type": "object",
-                    "pattern": "InsuranceCredential"
-                  }
-                }
-              ]
-            }
-          }
-        ]
-      }
-    },
-    {
-      "logo": "/assets/cert.png",
-      "name": "DNID",
-      "type": "DNID",
-      "definition": {
-        "purpose": "Relying party is requesting your digital ID for the purpose of Self-Authentication",
-        "format": {
-          "ldp_vc": {
-            "proof_type": ["Ed25519Signature2020"]
-          }
-        },
-        "input_descriptors": [
-          {
-            "id": "id card credential",
-            "format": {
-              "ldp_vc": {
-                "proof_type": ["Ed25519Signature2020"]
-              }
-            },
-            "constraints": {
-              "fields": [
-                {
-                  "path": ["$.type"],
-                  "filter": {
-                    "type": "object",
-                    "pattern": "DNID"
+                    "pattern": "CAFDocument"
                   }
                 }
               ]
