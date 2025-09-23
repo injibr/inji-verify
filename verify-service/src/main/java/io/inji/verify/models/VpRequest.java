@@ -25,9 +25,6 @@ public class VpRequest {
     @JoinColumn(name = "bank_credential_id", referencedColumnName = "bank_id", nullable = false)
     private BankCredential bankCredential;
 
-    @Column(name = "cpf_number", nullable = false, length = 14)
-    private String cpfNumber;
-
     // Getters and Setters
     public UUID getId() {
         return id;
@@ -59,14 +56,6 @@ public class VpRequest {
 
     public void setBankCredential(BankCredential bankCredential) {
         this.bankCredential = bankCredential;
-    }
-
-    public String getCpfNumber() {
-        return cpfNumber;
-    }
-
-    public void setCpfNumber(String cpfNumber) {
-        this.cpfNumber = cpfNumber;
     }
 }
 

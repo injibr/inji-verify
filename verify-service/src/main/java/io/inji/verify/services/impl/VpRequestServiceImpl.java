@@ -23,7 +23,7 @@ public class VpRequestServiceImpl implements VpRequestService {
 
     @Override
     @Transactional
-    public void saveVpRequest(String bankId, String requestId, String transactionId, String cpf_number) {
+    public void saveVpRequest(String bankId, String requestId, String transactionId) {
         // Fetch the BankCredential by bankId
         BankCredential bankCredential = bankCredentialService.findByBankId(bankId);
         if (Objects.isNull(bankCredential)) {
@@ -35,7 +35,6 @@ public class VpRequestServiceImpl implements VpRequestService {
         vpRequest.setBankCredential(bankCredential);
         vpRequest.setRequestId(requestId);
         vpRequest.setTransactionId(transactionId);
-        vpRequest.setCpfNumber(cpf_number);
 
         vpRequestRepository.save(vpRequest);
     }

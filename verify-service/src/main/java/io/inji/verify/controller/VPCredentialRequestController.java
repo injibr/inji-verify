@@ -39,7 +39,7 @@ public class VPCredentialRequestController {
         }
         try {
             VPRequestResponseDto authorizationRequestResponse = verifiablePresentationRequestService.createAuthorizationRequest(vpRequestCreate);
-            vpRequestService.saveVpRequest(bankId, authorizationRequestResponse.getRequestId(), authorizationRequestResponse.getTransactionId(),cpf);
+            vpRequestService.saveVpRequest(bankId, authorizationRequestResponse.getRequestId(), authorizationRequestResponse.getTransactionId());
             return ResponseEntity.status(HttpStatus.CREATED).body(authorizationRequestResponse);
         } catch (PresentationDefinitionNotFoundException e) {
             log.error(e.getMessage());
