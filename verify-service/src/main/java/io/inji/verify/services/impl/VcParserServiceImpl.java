@@ -69,6 +69,40 @@ public class VcParserServiceImpl implements VcParserService {
         return issuerNode.asText();
     }
 
+    /**
+     * Extracts a specific value from the vcMetadata of the first verifiableCredential in the input JSON.
+     *
+     * @param jsonInput The input JSON string containing verifiable credentials.
+     * @return The extracted value as a String.
+     * @throws JsonProcessingException If there is an error processing the JSON.
+     */
+    @Override
+    public String getTypesInVerifiableCredential(String jsonInput,int vcNumber) throws JsonProcessingException {
+
+        // Navigate to vcMetadata -> issuer
+        JsonNode issuerNode = getVerifiableCredentialNode(jsonInput, vcNumber)
+                .path("verifiableCredential")
+                .path("credential")
+                .path("type");
+
+        if (issuerNode.isMissingNode()) {
+            throw new IllegalArgumentException("issuer not found in vcMetadata");
+        }
+
+        String extractedType = null;
+        if (issuerNode.isArray()) {
+            for (JsonNode typeNode : issuerNode) {
+                String typeValue = typeNode.asText();
+                if (!"VerifiableCredential".equals(typeValue)) {
+                    extractedType = typeValue;
+                    break;
+                }
+            }
+        }
+
+        return extractedType;
+    }
+
     private String getCorrectJsonString(String json){
         return json.replace("\t", "\\t");
     }
