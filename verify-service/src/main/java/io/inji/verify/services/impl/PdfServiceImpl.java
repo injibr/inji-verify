@@ -136,7 +136,7 @@ public class PdfServiceImpl implements PdfService {
             try {
                 credentialMap = vcParserService.extractCredentialSubject(vc, i);
                 issuerId = vcParserService.getValueFromVcMetadata(vc,"issuer", i);
-                credentialType = vcParserService.getValueFromVcMetadata(vc,"credentialType", i);
+                credentialType = vcParserService.getTypesInVerifiableCredential(vc, i);
             }catch (JsonProcessingException ex){
                 log.error("Error while parsing vc",ex);
                 throw new PdfParseException();
