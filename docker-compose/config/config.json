@@ -1,0 +1,164 @@
+{
+  "verifiableClaims": [
+    {
+      "logo": "/assets/cert.png",
+      "name": "CAR Document",
+      "type": "CARDocument",
+      "definition": {
+        "purpose": "Relying party is requesting your digital ID for the purpose of Self-Authentication",
+        "format": {
+          "ldp_vc": {
+            "proof_type": [
+              "Ed25519Signature2020"
+            ]
+          }
+        },
+        "input_descriptors": [
+          {
+            "id": "id card credential",
+            "format": {
+              "ldp_vc": {
+                "proof_type": [
+                  "Ed25519Signature2020"
+                ]
+              }
+            },
+            "constraints": {
+              "fields": [
+                {
+                  "path": [
+                    "$.type"
+                  ],
+                  "filter": {
+                    "type": "object",
+                    "pattern": "CARDocument"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "logo": "/assets/cert.png",
+      "name": "CAR Receipt",
+      "type": "CARReceipt",
+      "definition": {
+        "purpose": "Relying party is requesting your digital ID for the purpose of Self-Authentication",
+        "format": {
+          "ldp_vc": {
+            "proof_type": [
+              "Ed25519Signature2020"
+            ]
+          }
+        },
+        "input_descriptors": [
+          {
+            "id": "id card credential",
+            "format": {
+              "ldp_vc": {
+                "proof_type": [
+                  "Ed25519Signature2020"
+                ]
+              }
+            },
+            "constraints": {
+              "fields": [
+                {
+                  "path": [
+                    "$.type"
+                  ],
+                  "filter": {
+                    "type": "object",
+                    "pattern": "CARReceipt"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "logo": "/assets/cert.png",
+      "name": "CCIR Credential",
+      "type": "CCIRCredential",
+      "definition": {
+        "purpose": "Relying party is requesting your digital ID for the purpose of Self-Authentication",
+        "format": {
+          "ldp_vc": {
+            "proof_type": [
+              "Ed25519Signature2020"
+            ]
+          }
+        },
+        "input_descriptors": [
+          {
+            "id": "id card credential",
+            "format": {
+              "ldp_vc": {
+                "proof_type": [
+                  "Ed25519Signature2020"
+                ]
+              }
+            },
+            "constraints": {
+              "fields": [
+                {
+                  "path": [
+                    "$.type"
+                  ],
+                  "filter": {
+                    "type": "object",
+                    "pattern": "CCIR"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "logo": "/assets/cert.png",
+      "name": "CAF Credentail",
+      "type": "CAFDocument",
+      "definition": {
+        "purpose": "Relying party is requesting your digital ID for the purpose of Self-Authentication",
+        "format": {
+          "ldp_vc": {
+            "proof_type": [
+              "Ed25519Signature2020"
+            ]
+          }
+        },
+        "input_descriptors": [
+          {
+            "id": "id card credential",
+            "format": {
+              "ldp_vc": {
+                "proof_type": [
+                  "Ed25519Signature2020"
+                ]
+              }
+            },
+            "constraints": {
+              "fields": [
+                {
+                  "path": [
+                    "$.type"
+                  ],
+                  "filter": {
+                    "type": "object",
+                    "pattern": "CAFDocument"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
