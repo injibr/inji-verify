@@ -14,7 +14,7 @@ automata {
 
     containers.add descriptor: 'verify-service/Dockerfile', imageName: 'inji/inji-verify'
 
-    qa.sonarOpts = '-Dsonar.exclusions=**/*.java'
+    //qa.sonarOpts = '-Dsonar.exclusions=**/*.java'
 
     // qa.sonarOpts = "-Dsonar.projectKey=br.gov.dataprev.inji:inji-verify -Dsonar.projectVersion=${version} -Dsonar.sources=."
     //qa.encoding = 'UTF-8'
