@@ -11,7 +11,7 @@ automata {
 
     containers.add descriptor: 'verify-service/Dockerfile', imageName: 'inji/inji-verify'
 
-    artifacts.add file: 'verify-service/target/inji-verify-${version}.jar'
+    artifacts.add file: 'target/inji-verify-${version}.jar'
 
     build.opts = "-Dgpg.skip=true -Dmaven.javadoc.skip=true"
 
