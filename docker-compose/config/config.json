@@ -111,7 +111,7 @@
                   ],
                   "filter": {
                     "type": "object",
-                    "pattern": "CCIR"
+                    "pattern": "CCIRCredential"
                   }
                 }
               ]
@@ -123,7 +123,7 @@
     {
       "logo": "/assets/cert.png",
       "name": "CAF Credentail",
-      "type": "CAFDocument",
+      "type": "CAFCredential",
       "definition": {
         "purpose": "Relying party is requesting your digital ID for the purpose of Self-Authentication",
         "format": {
@@ -151,7 +151,7 @@
                   ],
                   "filter": {
                     "type": "object",
-                    "pattern": "CAFDocument"
+                    "pattern": "CAFCredential"
                   }
                 }
               ]
