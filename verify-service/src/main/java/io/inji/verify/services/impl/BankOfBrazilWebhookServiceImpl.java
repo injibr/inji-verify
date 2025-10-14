@@ -72,6 +72,7 @@ public class BankOfBrazilWebhookServiceImpl implements BankWebhookService {
      */
     public void callWebhook(Map<String, ByteArrayInputStream> pdfs, VPTokenResultDto result, String webhookUrl, String apiKey) {
         try {
+            log.info("Preparing to call Bank of Brazil webhook");
             File clientCert = new ClassPathResource(clientCertPath).getFile();
             File clientKey = new ClassPathResource(clientKeyPath).getFile();
             File caCert = new ClassPathResource(caCertPath).getFile();
@@ -112,7 +113,7 @@ public class BankOfBrazilWebhookServiceImpl implements BankWebhookService {
 
 
             String bearerToken = "Bearer " + getAccessToken();
-
+            log.info("Bearer Token is provided for webhook call");
             webClient1.post()
                     .uri(uriBuilder -> uriBuilder
                             .path("/v1/response/files")
@@ -137,6 +138,7 @@ public class BankOfBrazilWebhookServiceImpl implements BankWebhookService {
                     )
                     .block();
         } catch (Exception ex) {
+            log.error("Error while calling bank webhook", ex);
             throw new BankWebHookException();
         }
     }
