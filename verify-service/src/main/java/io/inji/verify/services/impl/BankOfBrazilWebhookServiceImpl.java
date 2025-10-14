@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
@@ -24,8 +25,10 @@ import reactor.netty.http.client.HttpClient;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Implementation of the BankWebhookService interface.
@@ -73,14 +76,19 @@ public class BankOfBrazilWebhookServiceImpl implements BankWebhookService {
     public void callWebhook(Map<String, ByteArrayInputStream> pdfs, VPTokenResultDto result, String webhookUrl, String apiKey) {
         try {
             log.info("Preparing to call Bank of Brazil webhook");
-            File clientCert = new ClassPathResource(clientCertPath).getFile();
-            File clientKey = new ClassPathResource(clientKeyPath).getFile();
-            File caCert = new ClassPathResource(caCertPath).getFile();
+            Resource clientCertResource = new ClassPathResource("certs/client.crt");
+            Resource clientKeyResource  = new ClassPathResource("certs/client.key");
+            Resource caCertResource     = new ClassPathResource("certs/ca.crt");
+
+            InputStream clientCertStream = clientCertResource.getInputStream();
+            InputStream clientKeyStream  = clientKeyResource.getInputStream();
+            InputStream caCertStream     = caCertResource.getInputStream();
+
 
             // Build Netty SslContext for the client
             SslContext sslContext = SslContextBuilder.forClient()
-                    .keyManager(clientCert, clientKey)
-                    .trustManager(caCert)
+                    .keyManager(clientCertStream, clientKeyStream)
+                    .trustManager(caCertStream)
                     .build();
 
             HttpClient httpClient = HttpClient.create()
