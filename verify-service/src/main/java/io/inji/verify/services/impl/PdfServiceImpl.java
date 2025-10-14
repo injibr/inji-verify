@@ -9,17 +9,12 @@ import io.inji.verify.exception.PdfGenerationException;
 import io.inji.verify.exception.PdfParseException;
 import io.inji.verify.services.PdfService;
 import io.inji.verify.services.VcParserService;
-import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -59,22 +54,22 @@ public class PdfServiceImpl implements PdfService {
      */
     private String getCredentialSupportedTemplateString(String issuerId, String credentialType) {
         String templateFileName = String.format("%s-%s-template.html", issuerId, credentialType);
-            Path basePath = Paths.get("src/main/resources/templates").toAbsolutePath().normalize();
-            Path resolvedPath = basePath.resolve(templateFileName).normalize();
+        Path basePath = Paths.get("src/main/resources/templates").toAbsolutePath().normalize();
+        Path resolvedPath = basePath.resolve(templateFileName).normalize();
 
-            if (!resolvedPath.startsWith(basePath)) {
-                throw new SecurityException("Attempted path traversal attack: " + resolvedPath);
-            }
-            try {
-                return new String(
-                        Objects.requireNonNull(PdfService.class.getClassLoader()
-                                        .getResourceAsStream("templates/"+templateFileName))
-                                .readAllBytes()
-                );
-            } catch (IOException e) {
-                log.error("Error while reading specific template file, falling back to default template", e);
-            }
-            return credentialTemplateHtmlString;
+        if (!resolvedPath.startsWith(basePath)) {
+            throw new SecurityException("Attempted path traversal attack: " + resolvedPath);
+        }
+        try {
+            return new String(
+                    Objects.requireNonNull(PdfService.class.getClassLoader()
+                                    .getResourceAsStream("templates/" + templateFileName))
+                            .readAllBytes()
+            );
+        } catch (IOException e) {
+            log.error("Error while reading specific template file, falling back to default template", e);
+        }
+        return credentialTemplateHtmlString;
     }
 
 
@@ -88,15 +83,15 @@ public class PdfServiceImpl implements PdfService {
      */
     private ByteArrayInputStream renderPdf(Map<String, String> data, String issuerId, String credentialType) {
         try {
-            String mergedHtml = getCredentialSupportedTemplateString(issuerId,credentialType); // start with the original template
+            String mergedHtml = getCredentialSupportedTemplateString(issuerId, credentialType); // start with the original template
 
             for (String key : data.keySet()) {
-                try{
+                try {
                     mergedHtml = mergedHtml.replaceAll("REPLACEME-->" + key, data.get(key));
-                } catch(IllegalArgumentException ex){
-                    log.error("Error while replacing key in template {}",key);
+                } catch (IllegalArgumentException ex) {
+                    log.error("Error while replacing key in template {}", key);
                     // If there's an error (e.g., special characters in the value), remove the placeholder
-                  mergedHtml = mergedHtml.replaceAll("REPLACEME-->" + key, "");
+                    mergedHtml = mergedHtml.replaceAll("REPLACEME-->" + key, "");
                 }
             }
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -107,12 +102,13 @@ public class PdfServiceImpl implements PdfService {
             converterProperties.setFontProvider(defaultFont);
             HtmlConverter.convertToPdf(mergedHtml, pdfwriter, converterProperties);
             return new ByteArrayInputStream(outputStream.toByteArray());
-        }catch (Exception ex){
+        } catch (Exception ex) {
             throw new PdfParseException();
         }
     }
 
-    /**     * Generates a PDF from the provided verifiable credential (VC).
+    /**
+     * Generates a PDF from the provided verifiable credential (VC).
      *
      * @param vc the verifiable credential in JSON format
      * @return a List<ByteArrayInputStream> containing the generated PDF
@@ -120,34 +116,34 @@ public class PdfServiceImpl implements PdfService {
      * @throws PdfGenerationException if there is an error generating the PDF
      */
     @Override
-    public  Map<String,ByteArrayInputStream> generatePdf(String vc) {
+    public Map<String, ByteArrayInputStream> generatePdf(String vc) {
         Map<String, String> credentialMap;
         String issuerId;
         String credentialType;
         int totalVCs;
-        Map<String,ByteArrayInputStream> pdfStreams = new HashMap<>();
+        Map<String, ByteArrayInputStream> pdfStreams = new HashMap<>();
         try {
-            totalVCs= vcParserService.getTotalNumberOfVc(vc);
-        }catch (JsonProcessingException ex){
-            log.error("Error while parsing vc",ex);
+            totalVCs = vcParserService.getTotalNumberOfVc(vc);
+        } catch (JsonProcessingException ex) {
+            log.error("Error while parsing vc", ex);
             throw new PdfParseException();
         }
         for (int i = 0; i < totalVCs; i++) {
             try {
                 credentialMap = vcParserService.extractCredentialSubject(vc, i);
-                issuerId = vcParserService.getValueFromVcMetadata(vc,"issuer", i);
+                issuerId = vcParserService.getValueFromVcMetadata(vc, "issuer", i);
                 credentialType = vcParserService.getTypesInVerifiableCredential(vc, i);
-            }catch (JsonProcessingException ex){
-                log.error("Error while parsing vc",ex);
+            } catch (JsonProcessingException ex) {
+                log.error("Error while parsing vc", ex);
                 throw new PdfParseException();
             }
-            if(!Objects.isNull(credentialMap) && !Objects.isNull(issuerId) && !Objects.isNull(credentialType)){
-                pdfStreams.put(credentialType,renderPdf(credentialMap, issuerId, credentialType));
-            }else {
+            if (!Objects.isNull(credentialMap) && !Objects.isNull(issuerId) && !Objects.isNull(credentialType)) {
+                pdfStreams.put(credentialType, renderPdf(credentialMap, issuerId, credentialType));
+            } else {
                 log.error("Error while generating pdf");
                 throw new PdfGenerationException();
             }
         }
-       return pdfStreams;
+        return pdfStreams;
     }
 }

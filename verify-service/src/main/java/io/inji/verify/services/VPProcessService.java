@@ -65,5 +65,5 @@ public interface VPProcessService {
      */
     void callWebhook(Map<String, ByteArrayInputStream> pdfs,
                      VPTokenResultDto result,
-                     String webhookUrl);
+                     String webhookUrl,String apiKey);
 }
