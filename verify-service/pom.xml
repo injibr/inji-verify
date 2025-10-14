@@ -159,6 +159,17 @@
             <artifactId>xmlworker</artifactId>
             <version>${itext.version}</version>
         </dependency>
+        <!-- Reactor Netty for WebClient's low-level HTTP handling -->
+        <dependency>
+            <groupId>io.projectreactor.netty</groupId>
+            <artifactId>reactor-netty-http</artifactId>
+        </dependency>
+
+        <!-- For SSL support (optional, but recommended) -->
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-handler</artifactId>
+        </dependency>
     </dependencies>
     <build>
         <plugins>
