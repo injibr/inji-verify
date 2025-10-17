@@ -23,9 +23,11 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 
+import javax.net.ssl.TrustManagerFactory;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.InputStream;
+import java.security.KeyStore;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -76,19 +78,21 @@ public class BankOfBrazilWebhookServiceImpl implements BankWebhookService {
     public void callWebhook(Map<String, ByteArrayInputStream> pdfs, VPTokenResultDto result, String webhookUrl, String apiKey) {
         try {
             log.info("Preparing to call Bank of Brazil webhook");
-            Resource clientCertResource = new ClassPathResource("certs/client.crt");
-            Resource clientKeyResource  = new ClassPathResource("certs/client.key");
-            Resource caCertResource     = new ClassPathResource("certs/ca.crt");
+            Resource clientCertResource = new ClassPathResource(clientCertPath);
+            Resource clientKeyResource  = new ClassPathResource(clientKeyPath);
+            Resource caCertResource     = new ClassPathResource(caCertPath);
 
             InputStream clientCertStream = clientCertResource.getInputStream();
             InputStream clientKeyStream  = clientKeyResource.getInputStream();
             InputStream caCertStream     = caCertResource.getInputStream();
 
+            TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+            tmf.init((KeyStore) null); // load default system CAs
 
             // Build Netty SslContext for the client
             SslContext sslContext = SslContextBuilder.forClient()
                     .keyManager(clientCertStream, clientKeyStream)
-                    .trustManager(caCertStream)
+                    .trustManager(tmf)
                     .build();
 
             HttpClient httpClient = HttpClient.create()
