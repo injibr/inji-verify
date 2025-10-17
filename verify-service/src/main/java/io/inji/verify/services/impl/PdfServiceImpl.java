@@ -86,10 +86,10 @@ public class PdfServiceImpl implements PdfService {
     private ByteArrayInputStream renderPdf(Map<String, String> data, String issuerId, String credentialType) {
         try {
             String html = null;
-            if (data.get("tipoImovel").equals("AST")){
+            if (!Objects.isNull(data.get("tipoImovel")) && data.get("tipoImovel").equals("AST")){
                 credentialType = "CARReceiptAST";
                 html =replaceAndGetHtmlAST(data,issuerId,credentialType);
-            }else if (data.get("tipoImovel").equals("PCT")){
+            }else if (!Objects.isNull(data.get("tipoImovel")) && data.get("tipoImovel").equals("PCT")){
                 credentialType = "CARReceiptPCT";
                 html =replaceAndGetHtml(data,issuerId,credentialType);
             }else {
