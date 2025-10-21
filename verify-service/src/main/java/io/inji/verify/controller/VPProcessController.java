@@ -57,6 +57,9 @@ public class VPProcessController {
             @NotNull @NotBlank @RequestParam("presentation_submission") String presentationSubmission,
             @NotNull @NotBlank @RequestParam("state") String state) {
         try {
+            log.info("vp_token: {}", vpToken);
+            log.info("presentation_submission: {}", presentationSubmission);
+            log.info("state: {}", state);
             // Step 1: Validate presentation submission
             PresentationSubmissionDto dto = vpProcessService.validatePresentationSubmission(presentationSubmission);
 
@@ -76,7 +79,7 @@ public class VPProcessController {
             Map<String, ByteArrayInputStream> pdfs = vpProcessService.generatePdf(vpToken);
 
             // Step 7: Call webhook
-            vpProcessService.callWebhook(pdfs, result, vpRequest.getBankCredential().getBankWebhookUrl());
+            vpProcessService.callWebhook(pdfs, result, vpRequest.getBankCredential().getBankWebhookUrl(),vpRequest.getBankCredential().getApiKey());
 
             // Step 8: Return final result
             return ResponseEntity.ok(result);
