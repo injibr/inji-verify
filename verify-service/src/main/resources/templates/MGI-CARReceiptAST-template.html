@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Demonstrativo do Status no CAR</title>
+    <style>
+        @page {
+          margin: 10px; /* Minimal margin on all sides for print/PDF */
+        }
+        body {
+          font-family: Arial, sans-serif;
+          font-size: 13px;
+          margin: 0;
+          padding: 0;
+        }
+
+        .page {
+          page-break-after: always;
+          height: 980px;
+          box-sizing: border-box;
+          position: relative;
+          margin: 0;
+          padding: 18px;
+        }
+
+        table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-top: 10px;
+          font-size: 13px;
+        }
+
+        th, td {
+          border: 1px solid #000;
+          padding: 5px;
+          vertical-align: top;
+        }
+
+        .section-title {
+          margin-top: 16px;
+          font-weight: bold;
+          font-size: 17px;
+        }
+
+    .footer {
+      position: absolute;
+      bottom: -100px;
+      left: 0;
+      right: 0;
+      height: 80px;
+      border-top: 1px solid #000;
+      display: flex;
+      justify-content: center; /* centers footer-text horizontally */
+      align-items: center;      /* aligns both footer-text and QR code vertically */
+      padding: 0 18px;
+      box-sizing: border-box;
+    }
+
+    .footer-text {
+      text-align: center;
+      font-size: 13px;
+      font-weight: bold;
+      line-height: 1;
+    }
+
+    .qr-code {
+      position: absolute;
+      right: 18px;
+      bottom: 10px;
+      width: 60px;
+      height: 60px;
+    }
+
+
+
+
+
+        h1 {
+        font-family: Arial, sans-serif;
+        font-size: 25px;
+        font-weight: bold;
+        text-align: center;
+        text-transform: uppercase;
+        margin-bottom: 12px;
+      }
+
+        li {
+          font-size: 14px;
+        }
+    </style>
+
+</head>
+<body>
+<!-- 🇧🇷 Flag and Page 1 -->
+<div class="page">
+    <div style="text-align: center; margin-bottom: 20px;">
+        <img src="https://upload.wikimedia.org/wikipedia/en/0/05/Flag_of_Brazil.svg" width="100" alt="Bandeira do Brasil">
+    </div>
+    <!-- Page 1 -->
+    <h1>RECIBO DE INSCRIÇÃO DO IMÓVEL RURAL DE
+        ASSENTAMENTOS DA REFORMA AGRÁRIA NO CAR</h1>
+    <table style="margin-bottom: 40px;">
+        <tr>
+            <td>Registro no CAR: REPLACEME-->codigoImovel</td>
+            <td>Data de Cadastro: REPLACEME-->dataCadastro</td>
+        </tr>
+    </table>
+    <div class="section-title" style="text-align: center;">RECIBO DE INSCRIÇÃO DO IMÓVEL RURAL NO CAR</div>
+    <table>
+        <tr>
+            <td colspan="4">Nome do Imóvel Rural: REPLACEME-->nomeImovel</td>
+        </tr>
+        <tr>
+            <td colspan="3">Município: REPLACEME-->municipio</td>
+            <td>UF: REPLACEME-->unidadeFederativa</td>
+        </tr>
+        <tr>
+            <td colspan="2">Coordenadas Geográficas do Centroide do Imóvel Rural:</td>
+            <td colspan="1">Latitude: REPLACEME-->coordenadaImovelX</td>
+            <td colspan="1">Longitude: REPLACEME-->coordenadaImovelY</td>
+        </tr>
+        <tr>
+            <td colspan="3">Area Total (ha) do Imóvel Rural: REPLACEME-->areaTotalImovel</td>
+            <td>Módulos Fiscais: REPLACEME-->moduloFiscal</td>
+        </tr>
+        <tr>
+            <td colspan="4">Código do Protocolo: REPLACEME-->protocolo</td>
+        </tr>
+    </table>
+    <div class="section-title">Informações Gerais</div>
+    <ol>
+        <li>Este documento garante o cumprimento do disposto nos § 2º do art. 14 e § 3º do art. 29 da Lei nº 12.651, de 2012, ese constitui em instrumento suficiente para atender ao disposto no art. 78-A da referida lei;</li>
+        <li>O presente documento representa a confirmação de que foi realizada a declaração do imóvel rural no Cadastro Ambental Rural-CAR e que está sujeito à validação pelo órgão competente;</li>
+        <li>As informações fornecidas no Cadastro Ambiental Rural (CAR) são declaratórias e sujeitas à análise pelo órgão competente.</li>
+        <li>Os documentos, especialmente os de caráter pessoal ou dominial, são de responsabilidade do proprietário oupossuidor rural declarante, que ficarão sujeitos às penas previstas no art. 299, do Código Penal (Decreto-Lei nº 2.848,de 7 de setembro de 1940) e no art. 69-A da Lei nº 9.605, de 12 de fevereiro de 1998;</li>
+        <li>demonstrativo da situação das informações declaradas no CAR, relativas às áreas de Preservação Permanente, deuso restrito e de Reserva Legal poderá ser acompanhado no sítio eletrônico www.car.gov.br;</li>
+        <li>Esta inscrição do Imóvel Rural no CAR poderá ser suspensa ou cancelada, a qualquer tempo, em função do nãoatendimento de notificações de pendência ou inconsistências detectadas pelo órgão competente nos prazosconcedidos ou por motivo de irregularidades constatadas;</li>
+        <li>Este documento não substitui qualquer licença ou autorização ambiental para exploração florestal ou supressão devegetação, como também nãodispensa as autorizações necessárias ao exercício da atividade econômica no imóvel rural;</li>
+        <li>A nscrição do Imóvel Rural no CAR não será considerada título para fins de reconhecimento de direito de propriedadeou posse; e</li>
+        <li>O declarante assume plena responsabilidade ambiental sobre o Imóvel Rural declarado em seu nome, sem prejuízode responsabilização por danos ambientais em área contígua, posteriormente comprovada como de sua propriedade ou posse.
+            <br><br><span class="spacer-vertical"></span></li>
+    </ol>
+    <div class="footer">
+        <div class="footer-text">
+            <p style="font-size: 15px;">CAR – Cadastro Ambiental Rural</p>
+            <p>Página 1/2</p>
+        </div>
+        <img class="qr-code" src="https://api.qrserver.com/v1/create-qr-code/?data=YOUR_DATA&size=150x150" alt="QR Code">
+
+    </div>
+
+</div>
+<!-- Page Break for PDF Rendering -->
+<div class="page">
+    <!-- Page 2 -->
+    <div style="text-align: center;">
+        <img src="https://upload.wikimedia.org/wikipedia/en/0/05/Flag_of_Brazil.svg" width="100" alt="Bandeira do Brasil">
+        <h1>RECIBO DE INSCRIÇÃO DO IMÓVEL RURAL NO CAR</h1>
+    </div>
+    <table>
+        <tr>
+            <td>Registro no CAR: REPLACEME-->codigoImovel</td>
+            <td>Data de Cadastro: REPLACEME-->dataCadastro</td>
+        </tr>
+    </table>
+    <div class="section-title">INFORMAÇÕES ADICIONAIS</div>
+    <p style="border: 1px solid black;">REPLACEME-->informacoesAdicionais</p>
+    <div class="section-title">REPRESENTAÇÃO GRÁFICA</div>
+    <div>
+        <img src="data:image/jpeg;base64,REPLACEME-->geoImovel" alt="Satellite Image" style="width:100%; max-width:800px;" />
+        <!--        <p style="width:100%; max-width:800px;">REPLACEME-->geoImovel</p>-->
+    </div>
+
+
+    <div class="section-title">IDENTIFICAÇÃO DO PROPRIETÁRIO/POSSUIDOR</div>
+    <table>
+        REPLACEME-->proprietarios
+    </table>
+    <div class="section-title" style="font-weight: bold; margin-bottom: 4px;">
+        ÁREAS DECLARADAS (em hectares)
+    </div>
+    <table>
+        <colgroup>
+            <col style="width: 40%;">
+            <col style="width: 10%;">
+            <col style="width: 40%;">
+            <col style="width: 10%;">
+        </colgroup>
+        <tr>
+            <th colspan="2" style="border: 1px solid black; padding: 4px; text-align: left;">Imóvel</th>
+            <th colspan="2" style="border: 1px solid black; padding: 4px; text-align: left;">Imóvel</th>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 4px;">Área Total do Imóvel</td>
+            <td style="border: 1px solid black; padding: 4px;">REPLACEME-->areaTotalImovel</td>
+            <td style="border: 1px solid black; padding: 4px;">Área Consolidada</td>
+            <td style="border: 1px solid black; padding: 4px;">REPLACEME-->areaConsolidada</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 4px;">Área de Servidão Administrativa</td>
+            <td style="border: 1px solid black; padding: 4px;">REPLACEME-->areaServidaoAdministrativa</td>
+            <td style="border: 1px solid black; padding: 4px;">Remanescente de Vegetação Nativa</td>
+            <td style="border: 1px solid black; padding: 4px;">REPLACEME-->areaRemanescenteVegetacaoNativa</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 4px;">Área Líquida do Imóvel</td>
+            <td style="border: 1px solid black; padding: 4px;">REPLACEME-->areaLiquidaImovel</td>
+            <td colspan="2" style="border: 1px solid black; padding: 4px; font-weight: bold;">Reserva Legal</td>
+        </tr>
+        <tr>
+            <td colspan="2" style="border: 1px solid black; padding: 4px; font-weight: bold;">APP / Uso Restrito</td>
+            <td style="border: 1px solid black; padding: 4px;">Área de Reserva Legal</td>
+            <td style="border: 1px solid black; padding: 4px;">REPLACEME-->areaReservaLegal</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 4px;">Área de Preservação Permanente</td>
+            <td style="border: 1px solid black; padding: 4px;">REPLACEME-->areaPreservacaoPermanente</td>
+            <td colspan="2" style="border: none;"></td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 4px;">Área de Uso Restrito</td>
+            <td style="border: 1px solid black; padding: 4px;">REPLACEME-->areaUsoRestrito</td>
+            <td colspan="2" style="border: none;"></td>
+        </tr>
+    </table>
+    <div class="footer">
+        <div class="footer-text">
+            <p style="font-size: 16px;">CAR – Cadastro Ambiental Rural</p>
+            <p>Página 1/2</p>
+        </div>
+        <img class="qr-code" src="data:image/png;base64,$qrCodeImage" alt="QR Code">
+    </div>
+</div>
+</body>
+</html>
