@@ -119,7 +119,7 @@ public class BankOfBrazilWebhookServiceImpl implements BankWebhookService {
                             }
                         };
 
-                        body.add(fileName, resource);
+                        body.add(fileName +".pdf", resource);
                     }
             );
 
@@ -132,16 +132,21 @@ public class BankOfBrazilWebhookServiceImpl implements BankWebhookService {
                             .queryParam(bbApiKey, apiKey)
                             .build())
                     .header("Authorization", bearerToken)
+                    .header("Cookie", "__cf_bm=u4eLY.1sDyjTRdGFWIVnUrH4bFmEEB3P2.WtKpTsef4-1760078340-1.0.1.1-XQOSwg2UwuJpAg.pVSB0BY7d.nsR8WNdMOtsZEgN0pBpKxI.jVqaRF5ho7cV8uaSQBBQJOIEpNvzTdtS8ysUlNnaNiAIg_zJTkuzlVEpDDE; 95dcb4e7d7f128466148ace27fd72dba=87e16e8d4685c5875c91d9acb83b4d82")
                     .contentType(MediaType.MULTIPART_FORM_DATA)
                     .body(BodyInserters.fromMultipartData(body))
                     .exchangeToMono(clientResponse ->
                             clientResponse.bodyToMono(String.class)
+                                    .defaultIfEmpty("")
                                     .map(bodyStr -> {
                                         HttpStatusCode status = clientResponse.statusCode();
-                                        log.error("STATUS: {}", status.value());
-                                        log.error("HEADERS: {}", clientResponse.headers().asHttpHeaders());
-                                        log.error("BODY: {}", bodyStr);
-
+                                        if (status.value() == 200) {
+                                            log.info("VP Submitted to bank successfully");
+                                        } else {
+                                            log.error("VP Submission failed. Response body: {}", clientResponse.bodyToMono(String.class));
+                                            log.error("VP Submission failed. Response Status: {}",status);
+                                            throw new BankWebHookException();
+                                        }
                                         Map<String, Object> map = new HashMap<>();
                                         map.put("status", status.value());
                                         map.put("body", bodyStr);
