@@ -1,36 +1,44 @@
 package io.inji.verify.services.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.inji.verify.dto.submission.VPTokenResultDto;
 import io.inji.verify.exception.BankWebHookException;
 import io.inji.verify.services.BankWebhookService;
-import io.netty.handler.ssl.SslContext;
-import io.netty.handler.ssl.SslContextBuilder;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.entity.mime.FileBody;
+import org.apache.hc.client5.http.entity.mime.MultipartEntityBuilder;
+import org.apache.hc.client5.http.entity.mime.StringBody;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
+import org.apache.hc.client5.http.io.HttpClientConnectionManager;
+import org.apache.hc.client5.http.ssl.SSLConnectionSocketFactory;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.io.entity.EntityUtils;
+import org.apache.hc.core5.net.URIBuilder;
+import org.apache.hc.core5.ssl.SSLContexts;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.Resource;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
-import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
-import reactor.netty.http.client.HttpClient;
 
-import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.SSLContext;
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.InputStream;
-import java.security.KeyStore;
-import java.util.HashMap;
+import java.io.IOException;
+import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.Map;
-import java.util.Objects;
 
 /**
  * Implementation of the BankWebhookService interface.
@@ -45,9 +53,11 @@ public class BankOfBrazilWebhookServiceImpl implements BankWebhookService {
     private final String auth;
     private final String grantType;
     private final String scope;
-    private final String clientCertPath;
-    private final String clientKeyPath;
-    private final String caCertPath;
+    private final String keyStorePath;
+    private final String keyStorePass;
+    private final String truststorePath;
+    private final String truststorePass;
+
     private final String bbApiKey;
 
     public BankOfBrazilWebhookServiceImpl(
@@ -56,18 +66,20 @@ public class BankOfBrazilWebhookServiceImpl implements BankWebhookService {
             @Value("${govbr.bb.token.auth}") String auth,
             @Value("${govbr.bb.token.grant.type}") String grantType,
             @Value("${govbr.bb.token.scope}") String scope,
-            @Value("${govbr.bb.client.cert-path}") String clientCertPath,
-            @Value("${govbr.bb.client.key-path}") String clientKeyPath,
-            @Value("${govbr.bb.ca.cert-path}") String caCertPath,
+            @Value("${mtls.client.keystore-path}") String keyStorePath,
+            @Value("${mtls.client.keystore-password}") String keyStorePass,
+            @Value("${mtls.client.truststore-path}") String truststorePath,
+            @Value("${mtls.client.truststore-password}") String truststorePass,
             @Value("${govbr.bb.api.key}") String bbApiKey) {
         this.webhookTokenUrl = webhookTokenUrl;
         this.webhookTokenUri = webhookTokenUri;
         this.auth = auth;
         this.grantType = grantType;
         this.scope = scope;
-        this.clientCertPath = clientCertPath;
-        this.clientKeyPath = clientKeyPath;
-        this.caCertPath = caCertPath;
+        this.keyStorePath = keyStorePath;
+        this.keyStorePass = keyStorePass;
+        this.truststorePath = truststorePath;
+        this.truststorePass = truststorePass;
         this.bbApiKey = bbApiKey;
     }
 
@@ -78,32 +90,6 @@ public class BankOfBrazilWebhookServiceImpl implements BankWebhookService {
     public void callWebhook(Map<String, ByteArrayInputStream> pdfs, VPTokenResultDto result, String webhookUrl, String apiKey) {
         try {
             log.info("Preparing to call Bank of Brazil webhook");
-            Resource clientCertResource = new ClassPathResource(clientCertPath);
-            Resource clientKeyResource  = new ClassPathResource(clientKeyPath);
-            Resource caCertResource     = new ClassPathResource(caCertPath);
-
-            InputStream clientCertStream = clientCertResource.getInputStream();
-            InputStream clientKeyStream  = clientKeyResource.getInputStream();
-            InputStream caCertStream     = caCertResource.getInputStream();
-
-            TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-            tmf.init((KeyStore) null); // load default system CAs
-
-            // Build Netty SslContext for the client
-            SslContext sslContext = SslContextBuilder.forClient()
-                    .keyManager(clientCertStream, clientKeyStream)
-                    .trustManager(tmf)
-                    .build();
-
-            HttpClient httpClient = HttpClient.create()
-                    .secure(spec -> spec.sslContext(sslContext));
-
-            WebClient webClient1 = WebClient.builder()
-                    .baseUrl(webhookUrl)
-                    .clientConnector(new ReactorClientHttpConnector(httpClient))
-                    .build();
-
-
             MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
             body.add("result", result);
 
@@ -119,41 +105,84 @@ public class BankOfBrazilWebhookServiceImpl implements BankWebhookService {
                             }
                         };
 
-                        body.add(fileName +".pdf", resource);
+                        body.add(fileName + ".pdf", resource);
                     }
             );
 
 
             String bearerToken = "Bearer " + getAccessToken();
-            log.info("Bearer Token is provided for webhook call");
-            webClient1.post()
-                    .uri(uriBuilder -> uriBuilder
-                            .path("/v1/response/files")
-                            .queryParam(bbApiKey, apiKey)
-                            .build())
-                    .header("Authorization", bearerToken)
-                    .header("Cookie", "__cf_bm=u4eLY.1sDyjTRdGFWIVnUrH4bFmEEB3P2.WtKpTsef4-1760078340-1.0.1.1-XQOSwg2UwuJpAg.pVSB0BY7d.nsR8WNdMOtsZEgN0pBpKxI.jVqaRF5ho7cV8uaSQBBQJOIEpNvzTdtS8ysUlNnaNiAIg_zJTkuzlVEpDDE; 95dcb4e7d7f128466148ace27fd72dba=87e16e8d4685c5875c91d9acb83b4d82")
-                    .contentType(MediaType.MULTIPART_FORM_DATA)
-                    .body(BodyInserters.fromMultipartData(body))
-                    .exchangeToMono(clientResponse ->
-                            clientResponse.bodyToMono(String.class)
-                                    .defaultIfEmpty("")
-                                    .map(bodyStr -> {
-                                        HttpStatusCode status = clientResponse.statusCode();
-                                        if (status.value() == 200) {
-                                            log.info("VP Submitted to bank successfully");
-                                        } else {
-                                            log.error("VP Submission failed. Response body: {}", clientResponse.bodyToMono(String.class));
-                                            log.error("VP Submission failed. Response Status: {}",status);
-                                            throw new BankWebHookException();
-                                        }
-                                        Map<String, Object> map = new HashMap<>();
-                                        map.put("status", status.value());
-                                        map.put("body", bodyStr);
-                                        return map;
-                                    })
+
+
+            SSLContext sslContext = SSLContexts.custom()
+                    .loadKeyMaterial(
+                            new File(keyStorePath),
+                            keyStorePass.toCharArray(),
+                            keyStorePass.toCharArray()
                     )
-                    .block();
+                    .loadTrustMaterial(
+                            new File(truststorePath),
+                            truststorePass.toCharArray()
+                    )
+                    .build();
+
+            SSLConnectionSocketFactory sslSocketFactory = new SSLConnectionSocketFactory(sslContext);
+            HttpClientConnectionManager cm = PoolingHttpClientConnectionManagerBuilder.create()
+                    .setSSLSocketFactory(sslSocketFactory)
+                    .build();
+
+            try (CloseableHttpClient httpClient = HttpClients.custom()
+                    .setConnectionManager(cm)
+                    .build()) {
+
+                URI uri = new URIBuilder(webhookUrl + "/v1/response/files")
+                        .addParameter(bbApiKey, apiKey)
+                        .build();
+                HttpPost post = new HttpPost(uri);
+
+
+                post.addHeader("Authorization", bearerToken);
+                post.addHeader("Cookie", "__cf_bm=u4eLY.1sDyjTRdGFWIVnUrH4bFmEEB3P2.WtKpTsef4-1760078340-1.0.1.1-XQOSwg2UwuJpAg.pVSB0BY7d.nsR8WNdMOtsZEgN0pBpKxI.jVqaRF5ho7cV8uaSQBBQJOIEpNvzTdtS8ysUlNnaNiAIg_zJTkuzlVEpDDE; 95dcb4e7d7f128466148ace27fd72dba=87e16e8d4685c5875c91d9acb83b4d82");
+
+
+                MultipartEntityBuilder builder = MultipartEntityBuilder.create();
+
+                ObjectMapper mapper = new ObjectMapper();
+                String resultsJson = mapper.writeValueAsString(result);
+
+                builder.addPart("results",
+                        new StringBody(resultsJson, ContentType.APPLICATION_JSON));
+
+                builder.addPart("results",
+                        new StringBody(resultsJson, ContentType.APPLICATION_JSON));
+
+                pdfs.forEach((fileName, bais) -> {
+                    try {
+                        File tempFile = File.createTempFile(fileName, ".pdf");
+                        Files.copy(bais, tempFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+
+                        builder.addPart(
+                                fileName + ".pdf",
+                                new FileBody(tempFile, ContentType.APPLICATION_OCTET_STREAM, tempFile.getName())
+                        );
+                    } catch (IOException e) {
+                        throw new RuntimeException("Error creating temp file for " + fileName, e);
+                    }
+                });
+
+                post.setEntity(builder.build());
+
+                try (CloseableHttpResponse response = httpClient.execute(post)) {
+                    if (response.getCode() == 200) {
+                        log.info("Response Body: {}", EntityUtils.toString(response.getEntity()));
+                        log.info("Successfully called Bank of Brazil webhook");
+                    } else {
+                        log.error("Failed to call Bank of Brazil webhook. Status Code: {}", response.getCode());
+                        log.error("Response Body: {}", EntityUtils.toString(response.getEntity()));
+                        throw new BankWebHookException();
+                    }
+
+                }
+            }
         } catch (Exception ex) {
             log.error("Error while calling bank webhook", ex);
             throw new BankWebHookException();
