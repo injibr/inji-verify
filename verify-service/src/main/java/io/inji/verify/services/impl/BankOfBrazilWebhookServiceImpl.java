@@ -152,9 +152,6 @@ public class BankOfBrazilWebhookServiceImpl implements BankWebhookService {
                 builder.addPart("results",
                         new StringBody(resultsJson, ContentType.APPLICATION_JSON));
 
-                builder.addPart("results",
-                        new StringBody(resultsJson, ContentType.APPLICATION_JSON));
-
                 pdfs.forEach((fileName, bais) -> {
                     try {
                         File tempFile = File.createTempFile(fileName, ".pdf");
