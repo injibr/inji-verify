@@ -74,6 +74,7 @@ public class VPProcessServiceImpl implements VPProcessService{
      * Throws VpRequestNotFoundException if missing.
      */
     public VpRequest fetchVpRequest(String requestId) {
+        log.info("Fetching VpRequest for requestId: {}", requestId);
         VpRequest vpRequest = vpRequestService.getVpRequestsByRequestId(requestId);
         if (Objects.isNull(vpRequest)) {
             throw new VpRequestNotFoundException("No VP Request found for requestId: " + requestId, ErrorCode.NO_VP_REQUEST);

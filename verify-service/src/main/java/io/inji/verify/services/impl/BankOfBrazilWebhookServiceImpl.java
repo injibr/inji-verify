@@ -32,12 +32,8 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import javax.net.ssl.SSLContext;
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.net.URI;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 import java.util.Map;
 
 /**
@@ -109,9 +105,8 @@ public class BankOfBrazilWebhookServiceImpl implements BankWebhookService {
                     }
             );
 
-
             String bearerToken = "Bearer " + getAccessToken();
-
+            log.info("Token retrieved successfully");
 
             SSLContext sslContext = SSLContexts.custom()
                     .loadKeyMaterial(
@@ -154,13 +149,21 @@ public class BankOfBrazilWebhookServiceImpl implements BankWebhookService {
 
                 pdfs.forEach((fileName, bais) -> {
                     try {
+                        if (bais.markSupported()) {
+                            bais.reset();
+                        }
+
                         File tempFile = File.createTempFile(fileName, ".pdf");
-                        Files.copy(bais, tempFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+
+                        try (OutputStream out = new FileOutputStream(tempFile)) {
+                            bais.transferTo(out);
+                        }
 
                         builder.addPart(
                                 fileName + ".pdf",
                                 new FileBody(tempFile, ContentType.APPLICATION_OCTET_STREAM, tempFile.getName())
                         );
+
                     } catch (IOException e) {
                         throw new RuntimeException("Error creating temp file for " + fileName, e);
                     }
@@ -192,6 +195,7 @@ public class BankOfBrazilWebhookServiceImpl implements BankWebhookService {
      * @return the access token as a String
      */
     private String getAccessToken() {
+        log.info("calling webhook token URL to get token");
         WebClient webClient = WebClient.builder()
                 .baseUrl(webhookTokenUrl)
                 .defaultHeader("Authorization", auth)
