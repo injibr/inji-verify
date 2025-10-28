@@ -57,9 +57,6 @@ public class VPProcessController {
             @NotNull @NotBlank @RequestParam("presentation_submission") String presentationSubmission,
             @NotNull @NotBlank @RequestParam("state") String state) {
         try {
-            log.info("vp_token: {}", vpToken);
-            log.info("presentation_submission: {}", presentationSubmission);
-            log.info("state: {}", state);
             // Step 1: Validate presentation submission
             PresentationSubmissionDto dto = vpProcessService.validatePresentationSubmission(presentationSubmission);
 
