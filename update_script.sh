@@ -291,7 +291,7 @@ function enviar_versao_para_ic() {
     # atualizar_arquivos_propriedades
     baixar_codigo
     enviar_codigo
-    enviar_scm
+    #enviar_scm
 }
 
 function atualizar_arquivos_propriedades() {
