@@ -76,7 +76,13 @@ public class VPProcessController {
             Map<String, ByteArrayInputStream> pdfs = vpProcessService.generatePdf(vpToken);
 
             // Step 7: Call webhook
-            vpProcessService.callWebhook(pdfs, result, vpRequest.getBankCredential().getBankWebhookUrl(),vpRequest.getBankCredential().getApiKey());
+            vpProcessService.callWebhook(pdfs,
+                    result,
+                    vpRequest.getBankCredential().getBankWebhookUrl(),
+                    vpRequest.getBankCredential().getApiKey(),
+                    vpRequest.getBankCredential().getBank_webhook_token_url(),
+                    vpRequest.getBankCredential().getBank_webhook_token_uri(),
+                    vpRequest.getBankCredential().getBankWebhookUri());
 
             // Step 8: Return final result
             return ResponseEntity.ok(result);

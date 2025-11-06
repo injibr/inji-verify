@@ -120,7 +120,10 @@ public class VPProcessServiceImpl implements VPProcessService{
     public void callWebhook(Map<String, ByteArrayInputStream> pdfs,
                             VPTokenResultDto result,
                             String webhookUrl,
-                            String apiKey) {
-        bankWebhookService.callWebhook(pdfs, result, webhookUrl,apiKey);
+                            String apiKey,
+                            String tokenUrl,
+                            String tokenUri,
+                            String webhookUri) {
+        bankWebhookService.callWebhook(pdfs, result, webhookUrl,apiKey, tokenUrl, tokenUri, webhookUri);
     }
 }

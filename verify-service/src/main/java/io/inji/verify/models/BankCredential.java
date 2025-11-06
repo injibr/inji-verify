@@ -31,6 +31,40 @@ public class BankCredential {
     @Column(name = "bank_webhook_url", length = 500)
     private String bankWebhookUrl;
 
+    @Column(name = "bank_webhook_uri", length = 500)
+    private String bankWebhookUri;
+
+    @Column(name = "bank_webhook_token_url", length = 500)
+    private String bank_webhook_token_url;
+
+    @Column(name = "bank_webhook_token_uri", length = 500)
+    private String bank_webhook_token_uri;
+
+    public String getBankWebhookUri() {
+        return bankWebhookUri;
+    }
+
+    public void setBankWebhookUri(String bankWebhookUri) {
+        this.bankWebhookUri = bankWebhookUri;
+    }
+
+    public String getBank_webhook_token_url() {
+        return bank_webhook_token_url;
+    }
+
+    public void setBank_webhook_token_url(String bank_webhook_token_url) {
+        this.bank_webhook_token_url = bank_webhook_token_url;
+    }
+
+    public String getBank_webhook_token_uri() {
+        return bank_webhook_token_uri;
+    }
+
+    public void setBank_webhook_token_uri(String bank_webhook_token_uri) {
+        this.bank_webhook_token_uri = bank_webhook_token_uri;
+    }
+
+
     // Getters and Setters
     public String getBankId() {
         return bankId;
