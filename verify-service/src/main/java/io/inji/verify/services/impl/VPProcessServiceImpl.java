@@ -1,5 +1,7 @@
 package io.inji.verify.services.impl;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.shaded.gson.Gson;
 import io.inji.verify.dto.authorizationrequest.VPRequestStatusDto;
 import io.inji.verify.dto.submission.PresentationSubmissionDto;
@@ -67,6 +69,21 @@ public class VPProcessServiceImpl implements VPProcessService{
      */
     public void submitVP(VPSubmissionDto vpSubmissionDto) {
         verifiablePresentationSubmissionService.submit(vpSubmissionDto);
+    }
+
+    @Override
+    public boolean isCredentialEmpty(VPSubmissionDto vpSubmissionDto) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode root = mapper.readTree(vpSubmissionDto.getVpToken());
+
+            JsonNode vcArray = root.get("verifiableCredential");
+
+            return vcArray == null || !vcArray.isArray() || vcArray.size() == 0;
+
+        } catch (Exception e) {
+            throw new RuntimeException("Invalid JSON", e);
+        }
     }
 
     /**
