@@ -1,9 +1,12 @@
 package io.inji.verify.controller;
 
 import io.inji.verify.dto.core.ErrorDto;
+import io.inji.verify.dto.result.VCResultDto;
 import io.inji.verify.dto.submission.PresentationSubmissionDto;
 import io.inji.verify.dto.submission.VPSubmissionDto;
 import io.inji.verify.dto.submission.VPTokenResultDto;
+import io.inji.verify.enums.VPResultStatus;
+import io.inji.verify.enums.VerificationStatus;
 import io.inji.verify.exception.BankWebHookException;
 import io.inji.verify.exception.VpRequestNotFoundException;
 import io.inji.verify.models.VpRequest;
@@ -21,6 +24,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.ByteArrayInputStream;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -64,7 +69,21 @@ public class VPProcessController {
             vpProcessService.verifyCurrentRequestStatus(state);
 
             // Step 3: Submit VP
-            vpProcessService.submitVP(new VPSubmissionDto(vpToken, dto, state));
+            VPSubmissionDto vpSubmissionDto = new VPSubmissionDto(vpToken, dto, state);
+            if (vpProcessService.isCredentialEmpty(vpSubmissionDto)) {
+                ArrayList<VCResultDto> list = new ArrayList<>();
+                list.add(new VCResultDto("vc", VerificationStatus.INVALID));
+                VpRequest vpRequest = vpProcessService.fetchVpRequest(state);
+                vpProcessService.callWebhook(new HashMap<>(),
+                        new VPTokenResultDto(vpRequest.getTransactionId(), VPResultStatus.FAILED,list),
+                        vpRequest.getBankCredential().getBankWebhookUrl(),
+                        vpRequest.getBankCredential().getApiKey(),
+                        vpRequest.getBankCredential().getBank_webhook_token_url(),
+                        vpRequest.getBankCredential().getBank_webhook_token_uri(),
+                        vpRequest.getBankCredential().getBankWebhookUri());
+                log.warn("Warning: VP contains no verifiable credentials.");
+            }
+            vpProcessService.submitVP(vpSubmissionDto);
 
             // Step 4: Fetch VpRequest
             VpRequest vpRequest = vpProcessService.fetchVpRequest(state);
