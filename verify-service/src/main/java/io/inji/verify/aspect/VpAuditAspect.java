@@ -1,6 +1,7 @@
 package io.inji.verify.aspect;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import io.inji.verify.config.AuditConfig;
 import io.inji.verify.exception.PdfParseException;
 import io.inji.verify.services.VcParserService;
 import io.inji.verify.services.VpProcessAuditService;
@@ -13,7 +14,6 @@ import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
-
 @Aspect
 @Component
 @Slf4j
@@ -22,15 +22,26 @@ public class VpAuditAspect {
     private final VpProcessAuditService auditService;
     private final VpRequestService vpRequestService;
     private final VcParserService vcParserService;
+    private final AuditConfig auditConfig;
 
-    public VpAuditAspect(VpProcessAuditService auditService, VpRequestService vpRequestService, VcParserService vcParserService) {
+    public VpAuditAspect(VpProcessAuditService auditService,
+                         VpRequestService vpRequestService,
+                         VcParserService vcParserService,
+                         AuditConfig auditConfig) {
         this.auditService = auditService;
         this.vpRequestService = vpRequestService;
         this.vcParserService = vcParserService;
+        this.auditConfig = auditConfig;
     }
 
     @Around("execution(* io.inji.verify.controller.VPProcessController.submitVP(..))")
     public Object auditVpProcess(ProceedingJoinPoint joinPoint) throws Throwable {
+
+        // 🔥 If audit OFF → skip all logic and run controller normally
+        if (!auditConfig.isAuditEnabled()) {
+            return joinPoint.proceed();
+        }
+
         MethodSignature sig = (MethodSignature) joinPoint.getSignature();
         String[] paramNames = sig.getParameterNames();    // <- this exists on MethodSignature
         Object[] paramValues = joinPoint.getArgs();
@@ -62,7 +73,7 @@ public class VpAuditAspect {
         } catch (Exception e) {
             log.error("VP verification failed: {}", e.getMessage());
             log.info("VP Audit created isVcShared=false | transactionId={}", transactionId);
-            auditService.logAudit( false, transactionId, credentialtypes.toString());
+            auditService.logAudit(false, transactionId, credentialtypes.toString());
             throw e;
         }
 
