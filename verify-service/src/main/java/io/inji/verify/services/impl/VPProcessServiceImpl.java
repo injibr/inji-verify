@@ -1,5 +1,7 @@
 package io.inji.verify.services.impl;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.shaded.gson.Gson;
 import io.inji.verify.dto.authorizationrequest.VPRequestStatusDto;
 import io.inji.verify.dto.submission.PresentationSubmissionDto;
@@ -69,11 +71,27 @@ public class VPProcessServiceImpl implements VPProcessService{
         verifiablePresentationSubmissionService.submit(vpSubmissionDto);
     }
 
+    @Override
+    public boolean isCredentialEmpty(VPSubmissionDto vpSubmissionDto) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode root = mapper.readTree(vpSubmissionDto.getVpToken());
+
+            JsonNode vcArray = root.get("verifiableCredential");
+
+            return vcArray == null || !vcArray.isArray() || vcArray.size() == 0;
+
+        } catch (Exception e) {
+            throw new RuntimeException("Invalid JSON", e);
+        }
+    }
+
     /**
      * Fetches the VpRequest object by requestId (state).
      * Throws VpRequestNotFoundException if missing.
      */
     public VpRequest fetchVpRequest(String requestId) {
+        log.info("Fetching VpRequest for requestId: {}", requestId);
         VpRequest vpRequest = vpRequestService.getVpRequestsByRequestId(requestId);
         if (Objects.isNull(vpRequest)) {
             throw new VpRequestNotFoundException("No VP Request found for requestId: " + requestId, ErrorCode.NO_VP_REQUEST);
@@ -118,7 +136,11 @@ public class VPProcessServiceImpl implements VPProcessService{
      */
     public void callWebhook(Map<String, ByteArrayInputStream> pdfs,
                             VPTokenResultDto result,
-                            String webhookUrl) {
-        bankWebhookService.callWebhook(pdfs, result, webhookUrl);
+                            String webhookUrl,
+                            String apiKey,
+                            String tokenUrl,
+                            String tokenUri,
+                            String webhookUri) {
+        bankWebhookService.callWebhook(pdfs, result, webhookUrl,apiKey, tokenUrl, tokenUri, webhookUri);
     }
 }
