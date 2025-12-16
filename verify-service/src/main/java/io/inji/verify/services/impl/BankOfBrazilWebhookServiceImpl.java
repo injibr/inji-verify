@@ -44,8 +44,6 @@ import java.util.Map;
 @Slf4j
 public class BankOfBrazilWebhookServiceImpl implements BankWebhookService {
     @Qualifier("webClientWithPemCert")
-    private final String webhookTokenUrl;
-    private final String webhookTokenUri;
     private final String auth;
     private final String grantType;
     private final String scope;
@@ -57,8 +55,6 @@ public class BankOfBrazilWebhookServiceImpl implements BankWebhookService {
     private final String bbApiKey;
 
     public BankOfBrazilWebhookServiceImpl(
-            @Value("${govbr.bb.token.base.url}") String webhookTokenUrl,
-            @Value("${govbr.bb.token.uri}") String webhookTokenUri,
             @Value("${govbr.bb.token.auth}") String auth,
             @Value("${govbr.bb.token.grant.type}") String grantType,
             @Value("${govbr.bb.token.scope}") String scope,
@@ -67,8 +63,6 @@ public class BankOfBrazilWebhookServiceImpl implements BankWebhookService {
             @Value("${mtls.client.truststore-path}") String truststorePath,
             @Value("${mtls.client.truststore-password}") String truststorePass,
             @Value("${govbr.bb.api.key}") String bbApiKey) {
-        this.webhookTokenUrl = webhookTokenUrl;
-        this.webhookTokenUri = webhookTokenUri;
         this.auth = auth;
         this.grantType = grantType;
         this.scope = scope;
@@ -83,7 +77,13 @@ public class BankOfBrazilWebhookServiceImpl implements BankWebhookService {
      * Calls the predefined webhook URL and handles the response.
      * In case of an error, it throws a BankWebHookException.
      */
-    public void callWebhook(Map<String, ByteArrayInputStream> pdfs, VPTokenResultDto result, String webhookUrl, String apiKey) {
+    public void callWebhook(Map<String, ByteArrayInputStream> pdfs,
+                            VPTokenResultDto result,
+                            String webhookUrl,
+                            String apiKey,
+                            String tokenUrl,
+                            String tokenUri,
+                            String webhookUri){
         try {
             log.info("Preparing to call Bank of Brazil webhook");
             MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
@@ -105,7 +105,7 @@ public class BankOfBrazilWebhookServiceImpl implements BankWebhookService {
                     }
             );
 
-            String bearerToken = "Bearer " + getAccessToken();
+            String bearerToken = "Bearer " + getAccessToken(tokenUrl,tokenUri);
             log.info("Token retrieved successfully");
 
             SSLContext sslContext = SSLContexts.custom()
@@ -129,7 +129,7 @@ public class BankOfBrazilWebhookServiceImpl implements BankWebhookService {
                     .setConnectionManager(cm)
                     .build()) {
 
-                URI uri = new URIBuilder(webhookUrl + "/v1/response/files")
+                URI uri = new URIBuilder(webhookUrl + webhookUri)
                         .addParameter(bbApiKey, apiKey)
                         .build();
                 HttpPost post = new HttpPost(uri);
@@ -194,16 +194,17 @@ public class BankOfBrazilWebhookServiceImpl implements BankWebhookService {
      *
      * @return the access token as a String
      */
-    private String getAccessToken() {
+    private String getAccessToken(String tokenUrl,
+                                  String tokenUri) {
         log.info("calling webhook token URL to get token");
         WebClient webClient = WebClient.builder()
-                .baseUrl(webhookTokenUrl)
+                .baseUrl(tokenUrl)
                 .defaultHeader("Authorization", auth)
                 .defaultHeader("Content-Type", MediaType.APPLICATION_FORM_URLENCODED_VALUE)
                 .build();
 
         Mono<JsonNode> responseMono = webClient.post()
-                .uri(webhookTokenUri)
+                .uri(tokenUri)
                 .body(BodyInserters.fromFormData("grant_type", grantType)
                         .with("scope", scope))
                 .retrieve()
