@@ -65,5 +65,16 @@ public interface VPProcessService {
      */
     void callWebhook(Map<String, ByteArrayInputStream> pdfs,
                      VPTokenResultDto result,
-                     String webhookUrl,String apiKey);
+                     String webhookUrl,
+                     String apiKey,
+                     String tokenUrl,
+                     String tokenUri,
+                     String webhookUri);
+    /**
+     * Checks if the VP submission contains any credentials.
+     *
+     * @param vpSubmissionDto DTO containing submission data
+     * @return true if no credentials are present, false otherwise
+     */
+    boolean isCredentialEmpty(VPSubmissionDto vpSubmissionDto);
 }

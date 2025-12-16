@@ -14,12 +14,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Service implementation for generating PDFs from Verifiable Credentials (VCs).
@@ -33,48 +28,17 @@ public class PdfServiceImpl implements PdfService {
 
     private final VcParserService vcParserService;
 
-    private String credentialTemplateHtmlString = null;
-
+    private final HtmlGeneratorFactory htmlGeneratorFactory;
 
     /**
      * Constructor for PdfServiceImpl.
      *
      * @param vcParserService the service used to parse verifiable credentials
      */
-    public PdfServiceImpl(VcParserService vcParserService) {
+    public PdfServiceImpl(VcParserService vcParserService, HtmlGeneratorFactory htmlGeneratorFactory) {
         this.vcParserService = vcParserService;
+        this.htmlGeneratorFactory = htmlGeneratorFactory;
     }
-
-
-    /**
-     * Retrieves the HTML template string for a given issuer ID and credential type.
-     * If a specific template is not found, it falls back to a default template.
-     *
-     * @param issuerId       the ID of the issuer
-     * @param credentialType the type of the credential
-     * @return the HTML template string
-     */
-    private String getCredentialSupportedTemplateString(String issuerId, String credentialType) {
-        String templateFileName = String.format("%s-%s-template.html", issuerId, credentialType);
-        Path basePath = Paths.get("src/main/resources/templates").toAbsolutePath().normalize();
-        Path resolvedPath = basePath.resolve(templateFileName).normalize();
-
-        if (!resolvedPath.startsWith(basePath)) {
-            throw new SecurityException("Attempted path traversal attack: " + resolvedPath);
-        }
-        try {
-            return new String(
-                    Objects.requireNonNull(PdfService.class.getClassLoader()
-                                    .getResourceAsStream("templates/" + templateFileName))
-                            .readAllBytes()
-            );
-        } catch (IOException e) {
-            log.error("Error while reading specific template file, falling back to default template", e);
-        }
-        return credentialTemplateHtmlString;
-    }
-
-
     /**
      * Renders a PDF from the provided data using the specified issuer ID and credential type.
      *
@@ -85,18 +49,23 @@ public class PdfServiceImpl implements PdfService {
      */
     private ByteArrayInputStream renderPdf(Map<String, String> data, String issuerId, String credentialType) {
         try {
-            String html = null;
+            String htmlGeneratorType;
             if (!Objects.isNull(data.get("tipoImovel")) && data.get("tipoImovel").equals("AST")){
                 credentialType = "CARReceiptAST";
-                html =replaceAndGetHtmlAST(data,issuerId,credentialType);
+                htmlGeneratorType = "CarReceiptAstHtmlGeneratorServiceImpl";
             } else if (credentialType.equals("CAFCredential")) {
-                html =replaceAndGetHtmlCaf(data,issuerId,credentialType);
-            } else if (!Objects.isNull(data.get("tipoImovel")) && data.get("tipoImovel").equals("PCT")){
+                htmlGeneratorType = "CAFCredentialHtmlGeneratorServiceImpl";
+            }else if (credentialType.equals("CARDocument")) {
+                htmlGeneratorType = "CARDocumentHtmlGeneratorServiceImpl";
+            }  else if (!Objects.isNull(data.get("tipoImovel")) && data.get("tipoImovel").equals("PCT")){
+                htmlGeneratorType = "defaultHtmlGeneratorService";
                 credentialType = "CARReceiptPCT";
-                html =replaceAndGetHtml(data,issuerId,credentialType);
             }else {
-                html =replaceAndGetHtml(data,issuerId,credentialType);
+                htmlGeneratorType = "defaultHtmlGeneratorService";
             }
+
+            String html = htmlGeneratorFactory.getHtmlGeneratorService(htmlGeneratorType)
+                    .replaceAndGetHtml(data, issuerId, credentialType);
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
             PdfWriter pdfwriter = new PdfWriter(outputStream);
@@ -110,167 +79,6 @@ public class PdfServiceImpl implements PdfService {
         }
     }
 
-    private String replaceAndGetHtml(Map<String,String> data, String issuerId, String credentialType) {
-       String mergedHtml = getCredentialSupportedTemplateString(issuerId, credentialType);
-        for (String key : data.keySet()) {
-            try {
-                mergedHtml = mergedHtml.replaceAll("REPLACEME-->" + key, data.get(key));
-            } catch (IllegalArgumentException ex) {
-                log.error("Error while replacing key in template {}", key);
-                // If there's an error (e.g., special characters in the value), remove the placeholder
-                mergedHtml = mergedHtml.replaceAll("REPLACEME-->" + key, "");
-            }
-        }
-        return mergedHtml;
-    }
-
-    private String replaceAndGetHtmlCaf(Map<String,String> data, String issuerId, String credentialType) {
-        String mergedHtml = getCredentialSupportedTemplateString(issuerId, credentialType);
-        for (String key : data.keySet()) {
-            try {
-                if (key.equals("membros")) {
-                    String input = data.get(key);
-
-                    // Pattern to extract each map { ... }
-                    Pattern mapPattern = Pattern.compile("\\{([^}]+)}");
-                    Matcher mapMatcher = mapPattern.matcher(input);
-
-                    ArrayList<HashMap<String, String>> resultList = new ArrayList<>();
-
-                    while (mapMatcher.find()) {
-                        String mapContent = mapMatcher.group(1);
-                        HashMap<String, String> map = new HashMap<>();
-
-                        Pattern pairPattern = Pattern.compile("(\\w+)=([^,]+)(?:,|$)");
-                        Matcher pairMatcher = pairPattern.matcher(mapContent);
-
-                        while (pairMatcher.find()) {
-                            String matcherKey = pairMatcher.group(1).trim();
-                            String value = pairMatcher.group(2).trim();
-                            map.put(matcherKey, value);
-                        }
-
-                        // Extract only nome and cpfCnpj
-                        HashMap<String, String> filtered = new HashMap<>();
-                        filtered.put("nome", map.get("nome"));
-                        filtered.put("cpf", map.get("cpf"));
-                        filtered.put("parentesco", map.get("parentesco"));
-                        filtered.put("responsavelUfpa", map.get("responsavelUfpa"));
-                        resultList.add(filtered);
-                    }
-
-                    StringBuilder html = new StringBuilder();
-                    for (HashMap<String, String> entry : resultList) {
-                        html.append("    <tr>\n");
-                        html.append("        <td>").append(entry.get("nome")).append("</td>\n");
-                        html.append("        <td>").append(entry.get("cpf")).append("</td>\n");
-                        html.append("        <td>").append(entry.get("parentesco")).append("</td>\n");
-                        html.append("        <td>").append(entry.get("responsavelUfpa")).append("</td>\n");
-                        html.append("    </tr>\n");
-                    }
-                    mergedHtml = mergedHtml.replaceAll("REPLACEME-->" + key, html.toString());
-                } else if (key.equals("areas")) {
-                    String input = data.get(key);
-
-                    // Pattern to extract each map { ... }
-                    Pattern mapPattern = Pattern.compile("\\{([^}]+)}");
-                    Matcher mapMatcher = mapPattern.matcher(input);
-
-                    ArrayList<HashMap<String, String>> resultList = new ArrayList<>();
-
-                    while (mapMatcher.find()) {
-                        String mapContent = mapMatcher.group(1);
-                        HashMap<String, String> map = new HashMap<>();
-
-                        // Pattern to extract key=value pairs
-                        Pattern pairPattern = Pattern.compile("(\\w+)=([^,]+)(?:,|$)");
-                        Matcher pairMatcher = pairPattern.matcher(mapContent);
-
-                        while (pairMatcher.find()) {
-                            String matcherKey = pairMatcher.group(1).trim();
-                            String value = pairMatcher.group(2).trim();
-                            map.put(matcherKey, value);
-                        }
-
-                        HashMap<String, String> filtered = new HashMap<>();
-                        filtered.put("condicaoPosse", map.get("condicaoPosse"));
-                        filtered.put("tamanho", map.get("tamanho"));
-                        filtered.put("municipio", map.get("municipio"));
-                        resultList.add(filtered);
-                    }
-
-                    StringBuilder html = new StringBuilder();
-                    for (HashMap<String, String> entry : resultList) {
-                        mergedHtml = mergedHtml.replaceAll("REPLACEME-->condicaoPosse", entry.get("condicaoPosse"));
-                        mergedHtml = mergedHtml.replaceAll("REPLACEME-->tamanho", entry.get("tamanho"));
-                        mergedHtml = mergedHtml.replaceAll("REPLACEME-->municipio", entry.get("municipio"));
-                    }
-                    mergedHtml = mergedHtml.replaceAll("REPLACEME-->" + key, html.toString());
-                } else{
-                    mergedHtml = mergedHtml.replaceAll("REPLACEME-->" + key, data.get(key));
-                }
-            } catch (IllegalArgumentException ex) {
-                log.error("Error while replacing key in template {}", key);
-                // If there's an error (e.g., special characters in the value), remove the placeholder
-                mergedHtml = mergedHtml.replaceAll("REPLACEME-->" + key, "");
-            }
-        }
-        return mergedHtml;
-    }
-
-    private String replaceAndGetHtmlAST(Map<String,String> data, String issuerId, String credentialType) {
-        String mergedHtml = getCredentialSupportedTemplateString(issuerId, credentialType);
-        for (String key : data.keySet()) {
-            try {
-                if (key.equals("proprietarios")) {
-                    String input = data.get(key);
-
-                    // Pattern to extract each map { ... }
-                    Pattern mapPattern = Pattern.compile("\\{([^}]+)}");
-                    Matcher mapMatcher = mapPattern.matcher(input);
-
-                    ArrayList<HashMap<String, String>> resultList = new ArrayList<>();
-
-                    while (mapMatcher.find()) {
-                        String mapContent = mapMatcher.group(1);
-                        HashMap<String, String> map = new HashMap<>();
-
-                        // Pattern to extract key=value pairs
-                        Pattern pairPattern = Pattern.compile("(\\w+)=([^,]+)(?:,|$)");
-                        Matcher pairMatcher = pairPattern.matcher(mapContent);
-
-                        while (pairMatcher.find()) {
-                            String matcherKey = pairMatcher.group(1).trim();
-                            String value = pairMatcher.group(2).trim();
-                            map.put(matcherKey, value);
-                        }
-
-                        // Extract only nome and cpfCnpj
-                        HashMap<String, String> filtered = new HashMap<>();
-                        filtered.put("nome", map.get("nome"));
-                        filtered.put("cpfCnpj", map.get("cpfCnpj"));
-                        resultList.add(filtered);
-                    }
-
-                    StringBuilder html = new StringBuilder();
-                    for (HashMap<String, String> entry : resultList) {
-                        html.append("    <tr>\n");
-                        html.append("        <td colspan=\"3\">CPF: ").append(entry.get("cpfCnpj")).append("</td>\n");
-                        html.append("        <td colspan=\"3\">Nome: ").append(entry.get("nome")).append("</td>\n");
-                        html.append("    </tr>\n");
-                    }
-                    mergedHtml = mergedHtml.replaceAll("REPLACEME-->" + key, html.toString());
-                }else{
-                    mergedHtml = mergedHtml.replaceAll("REPLACEME-->" + key, data.get(key));
-                }
-            } catch (IllegalArgumentException ex) {
-                log.error("Error while replacing key in template {}", key);
-                // If there's an error (e.g., special characters in the value), remove the placeholder
-                mergedHtml = mergedHtml.replaceAll("REPLACEME-->" + key, "");
-            }
-        }
-        return mergedHtml;
-    }
 
     /**
      * Generates a PDF from the provided verifiable credential (VC).
