@@ -11,8 +11,10 @@
 # Parametros necessários
 
 COMPONENTE=inji-verify  #componente inji a ser tratado no script
-PATH_POM_PARENT=/pom.xml
-PATH_POM_SERVICE=/verify-service/pom.xml
+POMS=(
+  "./pom.xml:project"
+  "./verify-service/pom.xml:parent_project"
+)
 
 ################################################################################################################################################################
 
@@ -165,8 +167,6 @@ function configurar_credenciais_ldap() {
     escrever_mensagem "Credenciais LDAP configuradas (usuário: $LDAP_USER)."
     escrever_log "Credenciais LDAP carregadas (usuário: $LDAP_USER)"
     
-    # Configurar proxy
-    #set_proxy
 }
 
 update_pom_version() {
@@ -242,6 +242,17 @@ update_pom_version() {
   echo "Atualização $pom_path concluída (modo: $mode)"
 }
 
+function atualizar_pom(){
+    for item in "${POMS[@]}"; do
+        pom_path="${item%%:*}"
+        mode="${item##*:}"
+
+        echo "Atualizando $pom_path (modo: $mode)"
+        update_pom_version "$pom_path" "$VERSION" "$mode" || exit 1
+    done
+}
+
+
 function baixar_codigo() {
     testar_repositorio_github
     escrever_mensagem "Atualizando código para nova versão $TAG..."
@@ -252,8 +263,7 @@ function baixar_codigo() {
     resultado_pull=$(git merge --allow-unrelated-histories -X theirs $TAG 2>&1)
     
     #Atualiza o pom de acordo com a versão passada via tag
-    update_pom_version .$PATH_POM_PARENT $VERSION project
-    update_pom_version .$PATH_POM_SERVICE $VERSION parent_project
+    atualizar_pom
     
     if [ $? -ne 0 ]; then
         mensagem_erro="Falha ao baixar o código da versão $TAG."
@@ -283,20 +293,6 @@ function baixar_codigo() {
     fi
 }
 
-function nova_tag_git() {
-    # Renomear tags para o padrão quando ok 
-    if [ -n "$ID_COMMIT_PULL" ]; then
-        escrever_mensagem "Criando nova tag $TAG ..."
-        escrever_log "Criando tag anotada: $TAG"
-        mensagem_commit=$(git show --pretty=format:%B -s "$ID_COMMIT_PULL")
-        git tag -a "$TAG" -m "$mensagem_commit"
-    else
-        escrever_mensagem "Criando nova tag $TAG ..."
-        escrever_log "Criando tag simples: $TAG"
-        git tag "$TAG"
-    fi
-}
-
 function commit_codigo() {
     escrever_mensagem "Fazendo commit do código ..."
     escrever_log "Iniciando commit dos arquivos"
@@ -314,8 +310,7 @@ function commit_codigo() {
     
     # Realizar o commit
     git commit -m "Atualizando arquivos para versão $TAG"
-    #Tag ja baixada junto com o codigo
-    nova_tag_git
+    
 }
 
 function push_scm() {
@@ -467,7 +462,5 @@ function principal() {
 }
 
 principal
-
-
 
 
