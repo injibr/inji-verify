@@ -33,6 +33,7 @@ CREATE TABLE verify.bank_credentials (
     api_key VARCHAR(255) NOT NULL,
     bank_secret VARCHAR(255) NOT NULL,
     bank_webhook_url VARCHAR(500),
+    bank_webhook_uri VARCHAR(500),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NULL,
     CONSTRAINT bank_credentials_pkey PRIMARY KEY (bank_id)
 );
