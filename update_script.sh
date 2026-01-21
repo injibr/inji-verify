@@ -11,8 +11,8 @@
 # Parametros necessários
 
 COMPONENTE=inji-verify  #componente inji a ser tratado no script
-PATH_POM_PARENT=./pom.xml
-PATH_POM_SERVICE=./verify-service/pom.xml
+PATH_POM_PARENT=/pom.xml
+PATH_POM_SERVICE=/verify-service/pom.xml
 
 ################################################################################################################################################################
 
@@ -247,7 +247,7 @@ function baixar_codigo() {
     escrever_mensagem "Atualizando código para nova versão $TAG..."
     escrever_log "Iniciando download do código versão $TAG"
     
-    git fetch github --tags
+    git fetch github tag "$TAG"
     # Capturar saída completa do comando git pull
     resultado_pull=$(git merge --allow-unrelated-histories -X theirs $TAG 2>&1)
     
