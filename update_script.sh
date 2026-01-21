@@ -1,23 +1,24 @@
 #!/bin/bash
 
+# Script: update_script.sh
+# Versão: 1.0.0
+# Descrição: Esse script executa download do repositorio externo github através de tag passada via terminal, 
+# atualiza os arquivos pom.xml baseado na tag (ex: v4.0 => 4.0.0), efetua commit local e faz push no repositorio scm na branch atual.
+# Autor: Alexandre Dekker
+# Data: 2026-01-21
+
 # Configurações do script
-# Parametros principais
-TAG_PREDEFINIDA="v0.10.2"  # Defina a tag diretamente aqui
-COMPONENTE=inji-verify   #componente inji a ser tratado no script
+# Parametros necessários
 
-# !!! IMPORTANTE O primeiro push por padrão tem o MANAGE_GITIGNORE=false para baixar o git_ignore sem conflitos do repositorio original github. 
-MANAGE_GITIGNORE=false     #Caso TRUE, adiciona o update_script e relatorios na lista do gitignore.
-# A execução via terminal solicita os dados LDAP, caso queira fixar suas credenciais nas variaveis abaixo,
-# desabilite a solicitação via terminal com a variavel INPUT_LDAP_CREDENTIAL=false e altere o MANAGE_GITIGNORE=true a partir da 2 atualização 
-# para que o script não seja comitado.
+COMPONENTE=inji-notification  #componente inji a ser tratado no script
+PATH_POM_PARENT=./pom.xml
+PATH_POM_SERVICE=./verify-service/pom.xml
 
-INPUT_LDAP_CREDENTIAL=true
+################################################################################################################################################################
+
 LDAP_USER="USER"  # Substitua pelo seu usuário
 LDAP_PASSWORD="PASS"  # Substitua pela sua senha
-
-#####f
-
-USAR_TAG_PREDEFINIDA=true   # Defina como true para usar a tag predefinida ou false para solicitar ao usuário
+USAR_TAG_PREDEFINIDA=false   # Defina como true para usar a tag predefinida ou false para solicitar ao usuário
 TAG=""
 VERSION=""
 ID_COMMIT_PULL=""
@@ -128,9 +129,10 @@ function ler_entrada_tag() {
         fi
     fi
     
-    VERSION=$(echo "$TAG" | sed 's/v//')
+    VERSION=$(echo "$TAG" | sed 's/^v//' | awk -F. '{ if (NF==1) print $1".0.0"; else if (NF==2) print $1"."$2".0"; else print $1"."$2"."$3 }')
     escrever_log "Tag selecionada: $TAG (versão: $VERSION)"
     escrever_mensagem "Versão confirmada: $TAG"
+    escrever_mensagem "Tag selecionada: $TAG (versão: $VERSION)"
 }
 
 function configurar_credenciais_ldap() {
@@ -167,14 +169,77 @@ function configurar_credenciais_ldap() {
     #set_proxy
 }
 
-function set_proxy() {
-    export http_proxy="http://${LDAP_USER}:${LDAP_PASSWORD}@10.70.124.16:3128" && export https_proxy="http://${LDAP_USER}:${LDAP_PASSWORD}@10.70.124.16:3128"
-    
-}
+update_pom_version() {
+  pom_path="$1"
+  new_version="$2"
+  mode="$3"   # project | parent_project
 
-function unset_proxy() {
-    export http_proxy= && export https_proxy=
-   
+  if [ -z "$pom_path" ] || [ -z "$new_version" ] || [ -z "$mode" ]; then
+    echo "Uso: update_pom_version <caminho_relativo_pom.xml> <nova_versao> <project|parent_project>"
+    return 1
+  fi
+
+  case "$pom_path" in
+    /*)
+      echo "Erro: o caminho do pom.xml deve ser relativo"
+      return 1
+      ;;
+  esac
+
+  if [ ! -f "$pom_path" ]; then
+    echo "Erro: arquivo não encontrado: $pom_path"
+    return 1
+  fi
+
+  awk -v new_version="$new_version" -v mode="$mode" '
+    BEGIN {
+      in_parent = 0
+      parent_updated = 0
+      project_updated = 0
+    }
+
+    # ---- PARENT ----
+    /<parent>/ {
+      in_parent = 1
+      print
+      next
+    }
+
+    in_parent && /<version>/ && !parent_updated {
+      if (mode == "parent_project") {
+        sub(/<version>[^<]*<\/version>/,
+            "<version>" new_version "</version>")
+        parent_updated = 1
+      }
+      print
+      next
+    }
+
+    /<\/parent>/ {
+      in_parent = 0
+      print
+      next
+    }
+
+    # ---- PROJECT ----
+    !in_parent && !project_updated && /<artifactId>/ {
+      print
+      getline
+      if ($0 ~ /<version>/) {
+        if (mode == "project" || mode == "parent_project") {
+          sub(/<version>[^<]*<\/version>/,
+              "<version>" new_version "</version>")
+          project_updated = 1
+        }
+      }
+      print
+      next
+    }
+
+    { print }
+  ' "$pom_path" > "$pom_path.tmp" && mv "$pom_path.tmp" "$pom_path"
+
+  echo "Atualização $pom_path concluída (modo: $mode)"
 }
 
 function baixar_codigo() {
@@ -182,15 +247,14 @@ function baixar_codigo() {
     escrever_mensagem "Atualizando código para nova versão $TAG..."
     escrever_log "Iniciando download do código versão $TAG"
     
-    #git fetch github tag $TAG
+    git fetch github --tags
     # Capturar saída completa do comando git pull
-    #resultado_pull=$(git merge --allow-unrelated-histories -X theirs tags/$TAG 2>&1)
-   
-    git fetch github
-    git merge --allow-unrelated-histories -X theirs github/$TAG
-
-
-
+    resultado_pull=$(git merge --allow-unrelated-histories -X theirs $TAG 2>&1)
+    
+    #Atualiza o pom de acordo com a versão passada via tag
+    update_pom_version .$PATH_POM_PARENT $VERSION project
+    update_pom_version .$PATH_POM_SERVICE $VERSION parent_project
+    
     if [ $? -ne 0 ]; then
         mensagem_erro="Falha ao baixar o código da versão $TAG."
         detalhes_erro="Código de erro: $?. Detalhes: $resultado_pull"
@@ -233,7 +297,7 @@ function nova_tag_git() {
     fi
 }
 
-function enviar_codigo() {
+function commit_codigo() {
     escrever_mensagem "Fazendo commit do código ..."
     escrever_log "Iniciando commit dos arquivos"
     
@@ -251,11 +315,11 @@ function enviar_codigo() {
     # Realizar o commit
     git commit -m "Atualizando arquivos para versão $TAG"
     #Tag ja baixada junto com o codigo
-    #nova_tag_git
+    nova_tag_git
 }
 
-function enviar_scm() {
-    unset_proxy
+function push_scm() {
+    #unset_proxy
     escrever_mensagem "Enviando alterações para SCM ..."
     escrever_log "Iniciando push para SCM"
     # Alterar nome da branch para a correta
@@ -288,10 +352,10 @@ function enviar_scm() {
 }
 
 function enviar_versao_para_ic() {
-    # atualizar_arquivos_propriedades
+    
     baixar_codigo
-    enviar_codigo
-    #enviar_scm
+    commit_codigo
+    push_scm
 }
 
 function atualizar_arquivos_propriedades() {
@@ -381,15 +445,13 @@ function principal() {
         escrever_mensagem "Pasta de relatórios criada: $PASTA_RELATORIOS"
     fi
     
-    if [ "$INPUT_LDAP_CREDENTIAL" = "true" ]; then
-        solicitar_ldap
-    fi
+    #Necessario para gerenciamento do git
+    solicitar_ldap
+    
+    #if [ "$MANAGE_GITIGNORE" = "true" ]; then
+    #    criar_gitignore
+    #fi
 
-    
-    
-    if [ "$MANAGE_GITIGNORE" = "true" ]; then
-        criar_gitignore
-    fi
     inicializar_relatorio
     escrever_log "Iniciando execução do script de atualização"
     
@@ -404,5 +466,8 @@ function principal() {
     finalizar_relatorio
 }
 
-# Iniciar execução do script
 principal
+
+
+
+
