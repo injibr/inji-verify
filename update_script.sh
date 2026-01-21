@@ -247,7 +247,7 @@ function baixar_codigo() {
     escrever_mensagem "Atualizando código para nova versão $TAG..."
     escrever_log "Iniciando download do código versão $TAG"
     
-    git fetch github tag "$TAG"
+    git fetch --no-tags github tag "$TAG"
     # Capturar saída completa do comando git pull
     resultado_pull=$(git merge --allow-unrelated-histories -X theirs $TAG 2>&1)
     
