@@ -10,7 +10,7 @@
 # Configurações do script
 # Parametros necessários
 
-COMPONENTE=inji-notification  #componente inji a ser tratado no script
+COMPONENTE=inji-verify  #componente inji a ser tratado no script
 PATH_POM_PARENT=./pom.xml
 PATH_POM_SERVICE=./verify-service/pom.xml
 
