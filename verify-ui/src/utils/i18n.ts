@@ -1,5 +1,6 @@
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
+
 import en from "../locales/en.json";
 import fr from "../locales/fr.json";
 import ta from "../locales/ta.json";
@@ -9,8 +10,10 @@ import ar from "../locales/ar.json";
 import pt from "../locales/pt.json";
 import es from "../locales/es.json";
 import km from "../locales/km.json";
+
 import { storage } from "./storage";
 import { LanguageObject } from "../types/data-types";
+import { iso6393, Language } from "iso-639-3";
 
 const resources = { en, ta, kn, hi, fr, ar, pt, es, km };
 
@@ -26,13 +29,45 @@ export const LanguagesSupported: LanguageObject[] = [
   { label: "ខ្មែរ", value: "km" },
 ];
 
-export const defaultLanguage = window._env_.DEFAULT_LANG;
+export function normalizeLanguageCode(lang: string | undefined | null): string {
+  const defaultLang = window._env_?.DEFAULT_LANG || "en";
+  if (!lang) return defaultLang;
 
-export const selected_language = storage.getItem(storage.SELECTED_LANGUAGE);
+  const code = lang.toLowerCase();
+
+  if (code.length === 2) {
+    const match = iso6393.find((entry) => entry.iso6391 === code);
+    return match?.iso6391 ?? defaultLang;
+  }
+
+  if (code.length === 3) {
+    const match = iso6393.find((entry) => entry.iso6393 === code);
+    return match?.iso6391 ?? defaultLang;
+  }
+
+  return defaultLang;
+}
+
+export function getLanguageCodes(lang: string): string[] {
+  const normalized = normalizeLanguageCode(lang);
+  const entry = iso6393.find((e: Language) => e.iso6391 === normalized);
+
+  if (!entry) return [normalized];
+
+  const aliases = new Set<string>();
+
+  if (entry.iso6391) aliases.add(entry.iso6391);
+  aliases.add(entry.iso6393);
+
+  return Array.from(aliases);
+}
+
+export const defaultLanguage = normalizeLanguageCode(window._env_?.DEFAULT_LANG) || "en";
+export const selected_language = normalizeLanguageCode(storage.getItem(storage.SELECTED_LANGUAGE));
 
 i18n.use(initReactI18next).init({
   resources,
-  lng: selected_language ? selected_language : defaultLanguage,
+  lng: selected_language || defaultLanguage,
   fallbackLng: defaultLanguage,
   interpolation: {
     escapeValue: false,
@@ -40,12 +75,13 @@ i18n.use(initReactI18next).init({
 });
 
 export const switchLanguage = async (language: string) => {
-  storage.setItem(storage.SELECTED_LANGUAGE, language);
-  await i18n.changeLanguage(language);
+  const normalized = normalizeLanguageCode(language);
+  storage.setItem(storage.SELECTED_LANGUAGE, normalized);
+  await i18n.changeLanguage(normalized);
 };
 
 export const isRTL = (language: string) => {
-  return language === "ar";
+  return normalizeLanguageCode(language) === "ar";
 };
 
 export const getDirCurrentLanguage = (language: string) => {

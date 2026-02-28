@@ -1,5 +1,6 @@
 package io.inji.verify.controller;
 
+import io.inji.verify.exception.VPRequestNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -22,8 +23,10 @@ import io.inji.verify.services.VerifiablePresentationRequestService;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 
+import static io.inji.verify.shared.Constants.VP_REQUEST_URI;
 
-@RequestMapping("/vp-request")
+
+@RequestMapping(VP_REQUEST_URI)
 @RestController
 @Validated
 @Slf4j
@@ -52,6 +55,15 @@ public class VPRequestController {
     @GetMapping(path = "/{requestId}/status")
     public DeferredResult<VPRequestStatusDto> getStatus(@PathVariable String requestId) {
         return verifiablePresentationRequestService.getStatus(requestId);
+    }
+
+    @GetMapping(path = "/{requestId}" , produces = "application/oauth-authz-req+jwt")
+    public ResponseEntity<Object> getVPRequest(@PathVariable String requestId) {
+        try {
+            return ResponseEntity.status(HttpStatus.OK).body(verifiablePresentationRequestService.getVPRequestJwt(requestId));
+        } catch (VPRequestNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorDto(ErrorCode.NO_AUTH_REQUEST));
+        }
     }
 
 }

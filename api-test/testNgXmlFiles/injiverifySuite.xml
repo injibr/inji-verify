@@ -17,6 +17,25 @@
 				name="io.mosip.testrig.apirig.injiverify.testscripts.SimplePostForAutoGenId" />
 		</classes>
 	</test>
+	<test name="CreateNewVerificationRequestWithDID">
+		<parameter name="ymlFile"
+			value="injiverify/CreateNewVerificationRequestWithDID/CreateNewVerificationRequestWithDID.yml" />
+		<parameter name="idKeyName" value="transactionId,requestId,requestUri" />
+		<classes>
+			<class
+				name="io.mosip.testrig.apirig.injiverify.testscripts.SimplePostForAutoGenId" />
+		</classes>
+	</test>
+	<test name="GetVpRequestWithDID">
+		<parameter name="ymlFile"
+			value="injiverify/GetVpRequestWithDID/GetVpRequestWithDID.yml" />
+			<parameter name="pathParams" value="requestId" />
+			<parameter name="headers" value="" />
+		<classes>
+			<class
+				name="io.mosip.testrig.apirig.injiverify.testscripts.GetWithParamAndHeader" />
+		</classes>
+	</test>
 	<test name="VpSubmission">
 		<parameter name="ymlFile"
 			value="injiverify/VpSubmission/VpSubmission.yml" />
@@ -47,6 +66,40 @@
 		<classes>
 			<class
 				name="io.mosip.testrig.apirig.injiverify.testscripts.SimplePost" />
+		</classes>
+	</test>
+
+    <test name="GetVpRequestWithSDJWT">
+		<parameter name="ymlFile"
+			value="injiverify/GetVpRequestWithSDJWT/GetVpRequestWithSDJWT.yml" />
+			<parameter name="idKeyName" value="transactionId,requestId,requestUri,id"/>
+		<classes>
+			<class
+				name="io.mosip.testrig.apirig.injiverify.testscripts.SimplePostForAutoGenId" />
+		</classes>
+	</test>
+	<test name="VpSubmissionSDJWT">
+		<parameter name="ymlFile"
+			value="injiverify/VpSubmissionSDJWT/VpSubmissionSDJWT.yml" />
+		<classes>
+			<class
+				name="io.mosip.testrig.apirig.injiverify.testscripts.SimplePostForAutoGenIdForUrlEncoded" />
+		</classes>
+	</test>
+	<test name="GetVpRequestStatusSDJWT">
+		<parameter name="ymlFile"
+			value="injiverify/GetVpRequestStatus/GetVpRequestStatusSDJWT.yml" />
+		<classes>
+			<class
+				name="io.mosip.testrig.apirig.injiverify.testscripts.GetWithParam" />
+		</classes>
+	</test>
+	<test name="GetVpTokenForRequestSDJWT">
+		<parameter name="ymlFile"
+			value="injiverify/GetVpTokenForRequest/GetVpTokenForRequestSDJWT.yml" />
+		<classes>
+			<class
+				name="io.mosip.testrig.apirig.injiverify.testscripts.GetWithParam" />
 		</classes>
 	</test>
 </suite>

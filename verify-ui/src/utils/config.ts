@@ -1,4 +1,10 @@
-import {AlertInfo, claim, VerificationStepsContentType} from "../types/data-types";
+import {
+    AlertInfo,
+    claim,
+    VcStatus,
+    VerificationMethod,
+    VerificationStep, VerificationStepsContentType,
+} from "../types/data-types";
 import i18next from 'i18next';
 
 export const Pages = {
@@ -6,14 +12,8 @@ export const Pages = {
     Scan:"/scan",
     VerifyCredentials: "/verify",
     Offline: "/offline",
-    Redirect: "/redirect",
     PageNotFound: "*"
 }
-
-export const SUPPORTED_DID_METHODS = ["web"];
-
-export const SUPPORTED_QR_HEADERS = [''];
-export const HEADER_DELIMITER = '';
 
 export const SupportedFileTypes = ["png", "jpeg", "jpg", "pdf"];
 
@@ -34,6 +34,7 @@ export const VerificationSteps: any = {
         SelectCredential: 2,
         RequestMissingCredential: 2,
         ScanQrCode: 3,
+        SelectWallet:3,
         DisplayResult: 4
     }
 }
@@ -90,6 +91,10 @@ export const getVerificationStepsContent = (): VerificationStepsContentType => {
                 description: i18next.t('VerificationStepsContent:VERIFY.ScanQrCode.description'),
             },
             {
+                label: i18next.t('VerificationStepsContent:VERIFY.SelectWallet.label'),
+                description: i18next.t('VerificationStepsContent:VERIFY.SelectWallet.description'),
+            },
+            {
                 label: i18next.t('VerificationStepsContent:VERIFY.DisplayResult.label'),
                 description: i18next.t('VerificationStepsContent:VERIFY.DisplayResult.description'),
             }
@@ -119,30 +124,6 @@ export const AlertMessages =()=> {
     }
 };
 
-// TODO: Update the error messages for the following
-// maintain mapping between the error codes and
-export const OvpErrors: any = () => {
-    return {
-      invalid_scope: i18next.t("OvpErrors:invalidScope"), //presently this won't be shown, as no scope is being passed
-      invalid_request: i18next.t("OvpErrors:invalidRequest"),
-      invalid_client: i18next.t("OvpErrors:invalidClient"), //handled in inji web, no redirection
-      vp_formats_not_supported: i18next.t("OvpErrors:vpFormatsNotSupported"), // presently not handled specifically, bad request (invalid_request error is responded)
-      invalid_presentation_definition_uri: i18next.t("OvpErrors:invalidPresentationDefinitionUri"), // not being used, presentation definition being used
-      invalid_presentation_definition_reference: i18next.t("OvpErrors:invalidPresentationDefinitionReference"), // not being used, presentation definition being used.
-      resource_not_found: i18next.t("OvpErrors:resourceNotFound"),
-      request_time_out: i18next.t("OvpErrors:requestTimeOut"),
-      uri_too_long: i18next.t("OvpErrors:uriTooLong"),
-      internal_server_error: i18next.t("OvpErrors:internalServerError"),
-      server_unavailable: i18next.t("OvpErrors:serverUnavailable"),
-      invalid_vp_token: i18next.t("OvpErrors:invalidVpToken"),
-      unsupported_format: i18next.t("OvpErrors:unsupportedFormat"),
-      invalid_resource:i18next.t("OvpErrors:invalidResources"),
-      invalid_params:i18next.t("OvpErrors:invalidParams"),
-    };
-  };
-
-export const ScanSessionExpiryTime = 60000; // in milliseconds
-
 export const UploadFileSizeLimits = {
     min: 10000, // 10KB
     max: 5000000 // 5MB
@@ -150,20 +131,22 @@ export const UploadFileSizeLimits = {
 
 export const InternetConnectivityCheckEndpoint = window._env_.INTERNET_CONNECTIVITY_CHECK_ENDPOINT ?? "https://dns.google/";
 
-export const InternetConnectivityCheckTimeout = isNaN(Number.parseInt(window._env_.INTERNET_CONNECTIVITY_CHECK_TIMEOUT))
+const InternetConnectivityTimeout = Number.parseInt(window._env_.INTERNET_CONNECTIVITY_CHECK_TIMEOUT);
+export const InternetConnectivityCheckTimeout = Number.isNaN(InternetConnectivityTimeout)
     ? 10000
-    : Number.parseInt(window._env_.INTERNET_CONNECTIVITY_CHECK_TIMEOUT); //milliseconds
+    : InternetConnectivityTimeout;
+
+const timeout = Number.parseInt(window._env_.DISPLAY_TIMEOUT);
+export const DisplayTimeout = Number.isNaN(timeout) ? 10000 : timeout;
 
 export const OvpQrHeader = window._env_.OVP_QR_HEADER;
 
-export const ZOOM_STEP = 2.5;
-export const INITIAL_ZOOM_LEVEL = 0;
-export const CONSTRAINTS_IDEAL_WIDTH = 2560;
-export const CONSTRAINTS_IDEAL_HEIGHT = 1440;
-export const CONSTRAINTS_IDEAL_FRAME_RATE = 30;
-export const FRAME_PROCESS_INTERVAL_MS = 100;
-export const THROTTLE_FRAMES_PER_SEC = 500; // Throttle frame processing to every 500ms (~2 frames per second)
-export let verifiableClaims: claim[] = [];
+let VCRenderOrders: any = {};
+let verifiableClaims: claim[] = [];
+
+export const getVCRenderOrders = () => VCRenderOrders;
+export const getVerifiableClaims = () => verifiableClaims;
+
 export const initializeClaims = async () => {
   try {
     const response = await fetch(window._env_.VERIFIABLE_CLAIMS_CONFIG_URL);
@@ -172,79 +155,75 @@ export const initializeClaims = async () => {
     }
     const data = await response.json();
     verifiableClaims = data.verifiableClaims as claim[];
+    VCRenderOrders = data.VCRenderOrders as any;
   } catch (error) {
     console.error("Error loading claims from ConfigMap:", error);
   }
 };
+
 initializeClaims();
-export const OPENID4VP_PROTOCOL = "openid4vp://authorize?";
-export const QrCodeExpiry = 300; //5*60 seconds
 
-export const backgroundColorMapping: any = {
-  SUCCESS: "bg-success",
-  EXPIRED: "bg-expired",
-  INVALID: "bg-invalid",
+export const backgroundColorMapping: Record<VcStatus, string> ={
+    SUCCESS: "bg-success",
+    EXPIRED: "bg-expired",
+    INVALID: "bg-invalid",
+    REVOKED: "bg-revoked",
 };
-export const textColorMapping: any = {
-  SUCCESS: "text-successText",
-  EXPIRED: "text-expiredText",
-  INVALID: "text-invalidText",
-};
-
-export const borderColorMapping: any = {
-  SUCCESS: "border-successBorder",
-  EXPIRED: "border-expiredBorder",
-  INVALID: "border-invalidBorder",
+export const textColorMapping: Record<VcStatus, string>  = {
+    SUCCESS: "text-successText",
+    EXPIRED: "text-expiredText",
+    INVALID: "text-invalidText",
+    REVOKED: "text-revokedText",
 };
 
-export const InsuranceCredentialRenderOrder = [
-  "fullName",
-  "gender",
-  "dob",
-  "benefits",
-  "policyName",
-  "policyNumber",
-  "policyIssuedOn",
-  "policyExpiresOn",
-  "mobile",
-  "email",
-];
+export const borderColorMapping: Record<VcStatus, string> = {
+    SUCCESS: "border-successBorder",
+    EXPIRED: "border-expiredBorder",
+    INVALID: "border-invalidBorder",
+    REVOKED: "border-revokedBorder",
+};
 
-export const farmerLandCredentialRenderOrder = [
-  "id",
-  "farmerId",
-  "dvcType",
-  {
-    farmerLandDetails: ["farmId", "district", "surveyNumber"],
-  },
-];
+export const isMobileDevice = (): boolean => {
+  const ua = navigator.userAgent;
 
-export const farmerCredentialRenderOrder = [
-  "farmerID",
-  "landOwnershipType",
-  "fullName",
-  "mobileNumber",
-  "dateOfBirth",
-  "gender",
-  "villageOrTown",
-  "district",
-  "state",
-  "postalCode",
-  "landArea",
-  "primaryCropType",
-  "secondaryCropType",
-];
+  const isMobileUA = /Android.*Mobile|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
 
-export const MosipVerifiableCredentialRenderOrder = [
-  "face",
-  "UIN",
-  "fullName",
-  "dateOfBirth",
-  "gender",
-  "phone",
-  "email",
-  "addressLine1",
-  "city",
-];
+  const isTabletUA =
+    /iPad/i.test(ua) ||
+    (/Macintosh/i.test(ua) && "ontouchend" in document) || // iPad iOS13+ (real)
+    (/Android/i.test(ua) && !/Mobile/i.test(ua));          // Android tablet
 
-export const BASE64_PADDING = "=="
+  return isMobileUA || isTabletUA;
+};
+
+export const EXCLUDE_KEYS_SD_JWT_VC = [
+  "cnf",
+  "iss",
+  "iat",
+  "nbf",
+  "exp",
+  "jti",
+  "sub",
+  "ssn",
+  "_sd_alg",
+  "_sd",
+  "@context",
+  "issuer",
+  "vct",
+].map((key) => key.toLowerCase());
+
+export const getStepConfig = (method: VerificationMethod | string) => {
+    switch (method) {
+        case "SCAN":
+        case "UPLOAD":
+        case "VERIFY":
+            return VerificationSteps[method];
+        default:
+            return null;
+    }
+};
+export interface VerificationStepWithStatus extends VerificationStep {
+    stepNumber: number;
+    isCompleted: boolean;
+    isActive: boolean;
+}

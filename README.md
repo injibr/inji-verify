@@ -1,3 +1,4 @@
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?branch=master)](https://sonarcloud.io/dashboard?branch=master)
 # Inji Verify
 
 Injiverify is a web interface to verify the validity of the QR / credential using a browser from smartphone / tablet / computer. A user should be able to do primariliy 4 key actions - Scan, Validate, Fetch, Display.
@@ -31,27 +32,43 @@ Prerequisites:
 
 Once the repo is cloned, following folders can be found under the inji-verify repository folder:
 
+- **api-test:** contains the API automation tests
+- **db_scripts:** contains the database scripts for the Inji Verify application
+  - sql (contains SQL scripts for database operations)
+  - [Readme.md](./db_scripts/README.md)
+- **db_upgrade_script:** contains the database upgrade and rollback scripts
+  - sql (contains SQL scripts for database upgrade and rollback)
+  - [Readme.md](./db_upgrade_script/inji_verify/README.md)
 - **deploy:** folder contains deployment scripts required to deploy on K8S
+- **docker-compose** : folder containing setup for docker compose
+  - config
+  - db-init
+  - docker-compose.yml
+  - [Readme.md](./docker-compose/README.md)
+- **docs** : contains the flow, OpenAPI documentation for the Inji Verify application
 - **helm:** folder contains helm charts required to deploy on K8S
-- **samples:** folder contains sample QR codes for testing
-- **ui:** contains the application source code for web UI, Dockerfile and docker-compose.yml files
+- **inji-verify-sdk:** contains the Inji Verify SDK
+  - src (source code)
+  - [Readme.md](./inji-verify-sdk/README.md)
+- **ui-test:** contains the ui automation tests
+- **utilities:** folder contains sample QR code variation generation utility for testing
+- **verify-service:** contains source code for the verify backend service
   - src (source code)
   - Dockerfile
-  - docker-compose.yml
+  - [Readme.md](./verify-service/README.md)
+- **verify-ui:** contains the application source code for web UI, Dockerfile and docker-compose.yml files
+  - src (source code)
+  - Dockerfile
   - [Readme.md](./verify-ui/README.md)
-- **ui-test:** contains the ui automation tests
-- **verify-service:** contains source code for the verify backend service
-- **verify-service-bom:** contains BOM for the verify backend service dependencies
-
 ---
 
 # Developer Setup:
 
-Once the repo is cloned, move into the inji-verify repository folder and run the following command to check out to the develop branch:
+Once the repo is cloned, move into the inji-verify repository folder and run the following command to check out to the release-0.16.x branch:
 
 ```shell
 cd inji-verify # move into the repository folder
-git checkout develop
+git checkout release-0.16.x
 ```
 
 ### Development server:
@@ -97,31 +114,15 @@ docker stop inji-verify-service-dev
 docker rm inji-verify-service-dev
 ```
 
-## Environment variables
-- *DATABASE_HOST* : Hostname of the database server
-- *DATABASE_PORT* : Port where the database service is accessible
-- *DATABASE_USERNAME* : Username for database access
-- *DATABASE_PASSWORD* : User password for database access
-- *INJI_VP_REQUEST_LONG_POLLING_TIMEOUT* : This configuration sets the VP request status long polling timeout using the INJI_VP_REQUEST_LONG_POLLING_TIMEOUT environment variable. If the variable is not set, the default timeout is 55,000 ms
-
 # Demo Setup:
 
 This section helps to quickly get started with a demo of the Inji Verify application
 
 Once the repository is cloned, move into the inji-verify repository directory.
-Choose one of the branches that are currently available for the demo:
-
-release branches:
-- release-0.12.x
-
-tags : 
-- v0.12.3
-
-active branches:
-- master
-- develop
 
 ```shell
 cd ./inji-verify # repository folder
-git checkout branchName/tagname # choose from any of the above branches
+git checkout branchName/tagname
 ```
+
+## [Deployment in K8 cluster](deploy/README.md)

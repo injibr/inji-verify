@@ -1,25 +1,24 @@
 import React from "react";
 import { VectorCollapse, VectorDownload } from "../../../../utils/theme-utils";
-import {
-  convertToId,
-  convertToTitleCase,
-  getDisplayValue,
-  saveData,
-} from "../../../../utils/misc";
+import { convertToTitleCase, saveData } from "../../../../utils/misc";
 import ActionButton from "../commons/ActionButton";
 import { useTranslation } from "react-i18next";
 import { getDetailsOrder } from "../../../../utils/commonUtils";
-import { VC, VcStatus } from "../../../../types/data-types";
+import { AnyVc, VcStatus } from "../../../../types/data-types";
 import {
   backgroundColorMapping,
   borderColorMapping,
   textColorMapping,
 } from "../../../../utils/config";
+import VcDetailsGrid from "./VcDetailsGrid";
+import i18next from "i18next";
+import VcSvgTemplate from "./VcSvgTemplate";
+import { getTemplateUrl } from "../../../../utils/svg-template-utils";
 
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
-  vc: VC;
+  vc: AnyVc;
   status: VcStatus;
   vcType: string;
   logo?: { url: any; alt: string };
@@ -34,7 +33,9 @@ const DisplayVcDetailsModal: React.FC<ModalProps> = ({
   logo,
 }) => {
   const { t } = useTranslation("Verify");
-  const orderedDetails = getDetailsOrder(vc);
+  const currentLang = i18next.language;
+  const orderedDetails = vc && getDetailsOrder(vc, currentLang);
+  const templateUrl = getTemplateUrl(vc);
 
   if (!isOpen) return null;
   return (
@@ -55,10 +56,10 @@ const DisplayVcDetailsModal: React.FC<ModalProps> = ({
                 {convertToTitleCase(vcType)}
               </h2>
               <div
-                className={`rounded-xl max-w-[120px] ${backgroundColorMapping[status]} border ${borderColorMapping[status]} p-1`}
+                className={`rounded-xl max-w-[120px] ${backgroundColorMapping[status as VcStatus]} border ${borderColorMapping[status as VcStatus]} p-1`}
               >
                 <p
-                  className={`font-normal text-smallTextSize text-center ${textColorMapping[status]}`}
+                  className={`font-normal text-smallTextSize text-center ${textColorMapping[status as VcStatus]}`}
                 >
                   {t(status)}
                 </p>
@@ -74,48 +75,11 @@ const DisplayVcDetailsModal: React.FC<ModalProps> = ({
         </div>
 
         <div className="space-y-4">
-          <div className="grid relative">
-            {orderedDetails.map((label, index) => {
-              const faceIndex = orderedDetails.findIndex( (item) => item.key === "face" );
-              const isEven = (index - (faceIndex !== -1 ? 1 : 0)) % 2 === 0;
-              return label.key === "face" ? (
-                <>
-                  <img
-                    src={label.value}
-                    alt="face"
-                    style={{
-                      width: 80,
-                      height: 80,
-                      borderRadius: 10,
-                      marginTop: 10,
-                    }}
-                  />
-                </>
-              ) : (
-                <div
-                  className={`py-2.5 px-1 xs:col-end-13 ${
-                    isEven
-                      ? "lg:col-start-1 lg:col-end-6"
-                      : "lg:col-start-8 lg:col-end-13"
-                  }`}
-                  key={label.key}
-                >
-                  <p
-                    id={convertToId(label.key)}
-                    className="font-normal text-verySmallTextSize break-all text-[#666666]"
-                  >
-                    {convertToTitleCase(label.key)}
-                  </p>
-                  <p
-                    id={`${convertToId(label.key)}-value`}
-                    className="font-bold text-smallTextSize break-all"
-                  >
-                    {getDisplayValue(label.value)}
-                  </p>
-                </div>
-              );
-            })}
-          </div>
+          {templateUrl ? (
+            <VcSvgTemplate vc={vc} templateUrl={templateUrl} />
+          ) : (
+            <VcDetailsGrid orderedDetails={orderedDetails} vc={vc} />
+          )}
         </div>
 
         <div className="flex justify-end space-x-4 mt-6">

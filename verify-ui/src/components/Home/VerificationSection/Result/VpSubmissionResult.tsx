@@ -1,19 +1,22 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import ResultSummary from "./ResultSummary";
 import { claim, VpSubmissionResultInt } from "../../../../types/data-types";
 import VpVerifyResultSummary from "./VpVerifyResultSummary";
 import DisplayVcCardView from "./DisplayVcCardView";
 import { Button } from "../commons/Button";
-import { t } from "i18next";
 import DisplayUnVerifiedVc from "./DisplayUnVerifiedVc";
 import { useVerifyFlowSelector } from "../../../../redux/features/verification/verification.selector";
+import {useTranslation} from "react-i18next";
+import {getCredentialType} from "../../../../utils/commonUtils";
+import { resetVpRequest } from "../../../../redux/features/verify/vpVerificationState";
+import { DisplayTimeout } from "../../../../utils/config";
+import { useAppDispatch } from "../../../../redux/hooks";
 
 type VpSubmissionResultProps = {
   verifiedVcs: VpSubmissionResultInt[];
   unverifiedClaims: claim[];
-  txnId: string;
   requestCredentials: () => void;
-  reGenerateQr: () => void;
+  requestMissingCredentials: () => void;
   restart: () => void;
   isSingleVc: boolean;
 };
@@ -21,15 +24,21 @@ type VpSubmissionResultProps = {
 const VpSubmissionResult: React.FC<VpSubmissionResultProps> = ({
   verifiedVcs,
   unverifiedClaims,
-  txnId,
   requestCredentials,
-  reGenerateQr,
+  requestMissingCredentials,
   restart,
   isSingleVc,
 }) => {
-  const vcStatus = verifiedVcs.length > 0 ? verifiedVcs[0].vcStatus : "INVALID";
-  const selectedClaims: claim[] = useVerifyFlowSelector((state) => state.selectedClaims) || [];
+  const vcStatus = isSingleVc ? verifiedVcs[0].vcStatus : "INVALID";
+  const originalSelectedClaims: claim[] = useVerifyFlowSelector((state) => state.originalSelectedClaims) || [];
   const isPartiallyShared = useVerifyFlowSelector((state) => state.isPartiallyShared );
+  const showResult = useVerifyFlowSelector((state) => state.isShowResult );
+  const { t } = useTranslation("Verify");
+  const filterVerifiedVcs = verifiedVcs.filter((verifiedVc) =>
+    originalSelectedClaims.some((selectedVc) => getCredentialType(verifiedVc.vc) === (selectedVc.type))
+  );
+  const dispatch = useAppDispatch();
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const renderRequestCredentialsButton = (propClasses = "") => (
     <div className={`flex flex-col items-center lg:hidden ${propClasses}`}>
@@ -37,9 +46,8 @@ const VpSubmissionResult: React.FC<VpSubmissionResultProps> = ({
         id="request-credentials-button"
         title={t("Verify:rqstButton")}
         className={`w-[339px] mt-5`}
-        fill
+        variant="fill"
         onClick={requestCredentials}
-        disabled={txnId !== ""}
       />
     </div>
   );
@@ -49,24 +57,34 @@ const VpSubmissionResult: React.FC<VpSubmissionResultProps> = ({
       <Button
         id="missing-credentials-button"
         title={t("missingCredentials")}
-        className={`w-[339px] mt-5`}
-        fill
-        onClick={reGenerateQr}
+        className={`w-[300px] mt-5`}
+        variant="fill"
+        onClick={requestMissingCredentials}
       />
       <Button
         id="restart-process-button"
         title={t("restartProcess")}
-        className={`w-[341px] mt-5`}
+        className={`w-[300px] mt-5`}
         onClick={restart}
       />
     </div>
   );
-  const filterVerifiedVcs = verifiedVcs.filter((verifiedVc) =>
-    selectedClaims.some(
-      (selectedVc) =>
-        verifiedVc.vc.credentialConfigurationId === selectedVc.type
-    )
-  );
+
+  const clearTimer = () => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+  };
+
+  useEffect(() => {
+    clearTimer();
+    timerRef.current = setTimeout(() => {
+      dispatch(resetVpRequest());
+    }, DisplayTimeout);
+
+    return () => clearTimer();
+  }, [dispatch]);
 
   return (
     <div className="space-y-6 mb-[100px] lg:mb-0">
@@ -80,7 +98,7 @@ const VpSubmissionResult: React.FC<VpSubmissionResultProps> = ({
       )}
       <div className="relative">
         <div className="flex flex-col items-center space-y-4 lg:space-y-6 mt-[-60px] lg:mt-[-70px]">
-          {verifiedVcs.length > 0 && verifiedVcs.map(({ vc, vcStatus }, index) => (
+          {showResult && verifiedVcs.map(({ vc, vcStatus }, index) => (
             <DisplayVcCardView
               key={index}
               vc={vc}
@@ -93,7 +111,6 @@ const VpSubmissionResult: React.FC<VpSubmissionResultProps> = ({
           ))}
         </div>
       </div>
-
       {isPartiallyShared
         ? renderMissingAndResetButton()
         : renderRequestCredentialsButton()}

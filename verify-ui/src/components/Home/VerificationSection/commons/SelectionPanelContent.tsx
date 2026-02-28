@@ -4,10 +4,11 @@ import { claim } from "../../../../types/data-types";
 import { RootState } from "../../../../redux/store";
 import { useTranslation } from "react-i18next";
 import { isRTL } from "../../../../utils/i18n";
-import { verifiableClaims } from "../../../../utils/config";
+import { isMobileDevice, getVerifiableClaims } from "../../../../utils/config";
 import {
   getVpRequest,
   resetVpRequest,
+  setFlowType,
   setSelectedClaims,
 } from "../../../../redux/features/verify/vpVerificationState";
 import { storage } from "../../../../utils/storage";
@@ -25,8 +26,10 @@ function SelectionPanelContent() {
   language = language ?? window._env_.DEFAULT_LANG;
   const rtl = isRTL(language);
   const selectedClaims = useVerifyFlowSelector((state) => state.selectedClaims);
+  const presentationDefinition = useVerifyFlowSelector((state) => state.presentationDefinition );
+  const isMobile = isMobileDevice();
 
-  const filteredClaims = verifiableClaims
+  const filteredClaims = getVerifiableClaims()
     .filter((claim) => claim.name.toLowerCase().includes(search.toLowerCase()))
     .sort((a, b) => {
       const aSelected = selectedClaims.includes(a);
@@ -41,18 +44,22 @@ function SelectionPanelContent() {
     });
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-      setSearch(event.target.value);
-    };
+    setSearch(event.target.value);
+  };
 
   const toggleClaimSelection = (claim: claim) => {
     if (selectedClaims.includes(claim)) {
       dispatch(
-        setSelectedClaims(
-         { selectedClaims: selectedClaims.filter((c: claim) => claim.name !== c.name)}
-        )
+        setSelectedClaims({
+          selectedClaims: selectedClaims.filter(
+            (c: claim) => claim.name !== c.name
+          ),
+        })
       );
     } else {
-      dispatch(setSelectedClaims({selectedClaims : [...selectedClaims, claim]}));
+      dispatch(
+        setSelectedClaims({ selectedClaims: [...selectedClaims, claim] })
+      );
     }
   };
 
@@ -64,23 +71,31 @@ function SelectionPanelContent() {
   const handleGenerateQR = () => {
     setSearch("");
     dispatch(getVpRequest({ selectedClaims }));
-    const triggerElement = document.getElementById("OpenID4VPVerification_trigger");    
+    const triggerElement = document.getElementById(
+      "OpenID4VPVerification_trigger"
+    );
     if (triggerElement) {
-      const event = new MouseEvent("click", { bubbles: true, cancelable: true });
+      const event = new MouseEvent("click", {
+        bubbles: true,
+        cancelable: true,
+      });
       triggerElement.dispatchEvent(event);
     }
   };
 
+  const handleOpenWallet = () => {
+    dispatch(setFlowType());
+  };
+
   useEffect(() => {
-    const essentialClaims = selectedClaims;
-    essentialClaims.forEach((claim: claim) =>
+    selectedClaims.forEach((claim: claim) =>
       storage.setItem(storage.ESSENTIAL_CLAIM, claim)
     );
   }, [selectedClaims]);
-  
+
   return (
-    <div className="fill-primary grid gap-6 p-3 lg:p-0">
-      <div className="hidden lg:block text-center sm:text-left">
+    <div className="fill-primary grid gap-6 p-3 rounded max-h-[80vh] overflow-y-auto">
+      <div className="lg:block sm:text-left">
         <h1 className="font-bold text-smallTextSize lg:text-lg sm:text-xl text-selectorPanelTitle">
           {t("selectorTitle")}
         </h1>
@@ -90,18 +105,21 @@ function SelectionPanelContent() {
       </div>
 
       <div className="flex justify-around lg:gap-4 box-border">
-        <div className="w-[200px] lg:w-[483px] flex items-center border-[2px] border-searchBorder rounded-lg p-2">
+        <div className="w-fit lg:w-[483px] flex items-center border-[2px] border-searchBorder rounded-lg p-2">
           <SearchIcon />
           <input
             type="text"
-            className="ml-2 outline-none w-full text-smallTextSize lg:text-sm placeholder:text-[8px] lg:placeholder:text-sm"
+            className="ml-2 outline-none w-full text-smallTextSize lg:text-sm placeholder:text-[14px] lg:placeholder:text-sm"
             placeholder={t("searchPlaceholder")}
             onChange={handleSearchChange}
           />
         </div>
-        <div
+        <button
+          type="button"
           onClick={() => setShowMenu(!showMenu)}
-          className="lg:w-[106px] relative flex items-center rounded-lg p-2 cursor-pointer border border-sortByBorder"
+          className="w-[120px] relative flex items-center rounded-lg p-2 cursor-pointer border border-sortByBorder"
+          aria-haspopup="menu"
+          aria-expanded={showMenu}
         >
           <FilterLinesIcon />
           <span className="text-sortByText font-semibold text-smallTextSize ml-2">
@@ -109,38 +127,42 @@ function SelectionPanelContent() {
           </span>
           {showMenu && (
             <div
+              role="menu"
               className={`absolute top-8 z-40 flex flex-col ${
                 rtl ? "left-1 lg:left-0" : "right-px"
               } mt-3 rounded-md shadow-lg bg-background overflow-hidden font-normal border border-gray-200`}
             >
               <button
+                role="menuitem"
                 onClick={() => setIsAscending(true)}
-                className="w-[106px] h-[44px] text-sortByText w-full text-left text-verySmallTextSize px-4 py-2 hover:bg-gray-100"
+                className="w-full h-[44px] text-sortByText text-left text-verySmallTextSize px-4 py-2 hover:bg-gray-100"
               >
                 {t("sortAtoZ")}
               </button>
               <div className="w-full border-t-[2px] border-sortByBorder" />
               <button
+                role="menuitem"
                 onClick={() => setIsAscending(false)}
-                className="w-[106px] h-[44px] text-sortByText w-full text-left text-verySmallTextSize px-4 py-2 hover:bg-gray-100"
+                className="w-full h-[44px] text-sortByText text-left text-verySmallTextSize px-4 py-2 hover:bg-gray-100"
               >
                 {t("sortZtoA")}
               </button>
             </div>
           )}
-        </div>
+        </button>
       </div>
 
-      <div>
+      <div className="h-[210px] overflow-y-auto custom-scrollbar">
         <h2 className="text-smallTextSize lg:text-sm font-bold text-gray-700 mb-2">
           {t("listHeader")}
         </h2>
         {filteredClaims.length > 0 ? (
-          <ul className="grid gap-4 max-h-[120px] lg:max-h-[250px] overflow-y-auto custom-scrollbar pr-4">
+          <ul className="grid gap-4 max-h-[120px] lg:max-h-[250px] pr-4">
             {filteredClaims.map((claim, index) => {
-              const isSelectedClaim = selectedClaims.includes(claim)
+              const isSelectedClaim = selectedClaims.includes(claim);
               return (
                 <li
+                  id={`${claim.name}-ItemBox`}
                   key={index}
                   className={`grid mb-2 ${
                     isSelectedClaim
@@ -159,7 +181,7 @@ function SelectionPanelContent() {
                         alt={claim.type}
                         className="w-10 h-10 rounded"
                       />
-                      <span className="truncate text-smallTextSize lg:text-sm">
+                      <span data-testid={`ItemBox-Text-${index}`} className="truncate font-semibold text-smallTextSize lg:text-sm">
                         {claim.name}
                       </span>
                     </div>
@@ -190,6 +212,7 @@ function SelectionPanelContent() {
                           ✓
                         </span>
                       </div>
+                      <span className="sr-only"> {claim.name} </span>
                     </label>
                   </div>
                 </li>
@@ -203,20 +226,31 @@ function SelectionPanelContent() {
         )}
       </div>
 
-      <div className="grid grid-cols-2 lg:flex lg:justify-end gap-2">
+      <div>
         <Button
-          id="verification-back-button"
-          className="w-full lg:w-[147px] text-smallTextSize lg:text-sm"
-          onClick={handleBack}
-          title={t("goBack")}
-        />
-        <Button
-          id="camera-access-denied-okay-button"
+          id="verification-generate-qr-code-button"
           title={t("generateQrCodeBtn")}
           onClick={handleGenerateQR}
-          className="w-full lg:w-[147px] text-smallTextSize lg:text-sm"
+          className="w-full text-smallTextSize lg:text-sm lg:mb-2"
           disabled={selectedClaims.length <= 0}
-          fill
+          variant="fill"
+        />
+        {isMobile && (
+          <Button
+            id="verification-open-wallet-button"
+            title={t("Common:Button.openWallet")}
+            className="w-full text-smallTextSize lg:text-sm my-2"
+            onClick={handleOpenWallet}
+            disabled={presentationDefinition.input_descriptors.length === 0}
+            variant="fill"
+          />
+        )}
+        <Button
+          id="selection-panel-back-button"
+          className="w-full text-smallTextSize lg:text-sm"
+          onClick={handleBack}
+          title={t("goBack")}
+          variant="clear"
         />
       </div>
     </div>

@@ -1,6 +1,6 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { claim, VpSubmissionResultInt } from "../../../../types/data-types";
+import {claim, VcStatus, VpSubmissionResultInt} from "../../../../types/data-types";
 import { useVerifyFlowSelector } from "../../../../redux/features/verification/verification.selector";
 import {
   backgroundColorMapping,
@@ -18,7 +18,8 @@ const VpVerifyResultSummary: React.FC<VpVerifyResultSummaryProps> = ({
   unverifiedClaims,
 }) => {
   const { t } = useTranslation("Verify");
-  const selectedClaims = useVerifyFlowSelector((state) => state.selectedClaims);
+  const originalSelectedClaims = useVerifyFlowSelector((state) => state.originalSelectedClaims);
+  const NoOfClaims = originalSelectedClaims.length;
   const NoOfValid: number = verifiedVcs.filter(
     (vc) => vc.vcStatus === "SUCCESS"
   ).length;
@@ -28,20 +29,23 @@ const VpVerifyResultSummary: React.FC<VpVerifyResultSummaryProps> = ({
   const NoOfInvalid: number = verifiedVcs.filter(
     (vc) => vc.vcStatus === "INVALID"
   ).length;
+  const NoOfRevoked: number = verifiedVcs.filter(
+    (vc) => vc.vcStatus === "REVOKED"
+  ).length;
 
   return (
     <div
       className={`flex flex-col items-center col-start-1 col-end-13 h-[170px] lg:h-[133px] bg-${window._env_.DEFAULT_THEME}-lighter-gradient w-full`}
     >
       <p className="font-normal text-lgNormalTextSize text-center mt-5">
-        {selectedClaims.length} {t("credentialsRequested")}:
+        {NoOfClaims} {t("credentialsRequested")}:
       </p>
       <div className="flex justify-center w-[392px]">
         {verifiedVcs.map((vc, index) => {
           const status = vc.vcStatus;
-          const bgColor = backgroundColorMapping[status];
-          const textColor = textColorMapping[status];
-          const borderColor = borderColorMapping[status];
+          const bgColor = backgroundColorMapping[status as VcStatus];
+          const textColor = textColorMapping[status as VcStatus];
+          const borderColor = borderColorMapping[status as VcStatus];
           return (
             index ===
               verifiedVcs.findIndex(
@@ -57,11 +61,13 @@ const VpVerifyResultSummary: React.FC<VpVerifyResultSummaryProps> = ({
                   {t(vc.vcStatus)}{" "}
                   <span className={`rounded-full bg-${textColor}`}>
                     {vc.vcStatus === "SUCCESS" &&
-                      NoOfValid + "/" + selectedClaims.length}
+                      NoOfValid + "/" + NoOfClaims}
                     {vc.vcStatus === "EXPIRED" &&
-                      NoOfExpired + "/" + selectedClaims.length}
+                      NoOfExpired + "/" + NoOfClaims}
                     {vc.vcStatus === "INVALID" &&
-                      NoOfInvalid + "/" + selectedClaims.length}
+                      NoOfInvalid + "/" + NoOfClaims}
+                    {vc.vcStatus === "REVOKED" &&
+                      NoOfRevoked + "/" + NoOfClaims}
                   </span>
                 </p>
               </div>
@@ -76,7 +82,7 @@ const VpVerifyResultSummary: React.FC<VpVerifyResultSummaryProps> = ({
               className={`font-normal text-lgNormalTextSize text-center text-[#636363]`}
             >
               {t("notShared")}{" "}
-              {unverifiedClaims.length + "/" + selectedClaims.length}
+              {unverifiedClaims.length + "/" + NoOfClaims}
             </p>
           </div>
         )}

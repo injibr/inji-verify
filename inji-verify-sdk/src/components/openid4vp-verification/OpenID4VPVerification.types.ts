@@ -1,12 +1,4 @@
-export type OpenID4VPError = {
-  message: string;
-  code?: string;
-  details?: unknown;
-};
-
-export type VerificationStatus = "success" | "invalid" | "expired";
-
-type vpResultStatus = "SUCCESS" | "FAILED";
+export type VerificationStatus = "valid" | "invalid" | "expired";
 
 export interface VerificationResult {
   /**
@@ -22,25 +14,7 @@ export interface VerificationResult {
   vcStatus: VerificationStatus;
 }
 
-export interface VerificationResults {
-  vcResults: VerificationResult[];
-  vpResultStatus: vpResultStatus;
-}
-
-export interface QrData {
-  transactionId: string;
-  requestId: string;
-  authorizationDetails: {
-    responseType: string;
-    clientId: string;
-    presentationDefinition: Record<string, unknown>;
-    presentationDefinitionUri?: string;
-    responseUri: string;
-    nonce: string;
-    iat: number;
-  };
-  expiresAt: number;
-}
+export type VerificationResults = VerificationResult[];
 
 export interface VPRequestBody {
   clientId: string;
@@ -49,7 +23,6 @@ export interface VPRequestBody {
   presentationDefinitionId?: string;
   presentationDefinition?: PresentationDefinition;
 }
-
 type ExclusivePresentationDefinition =
   /**
    * ID of the presentation definition used for verification.
@@ -76,7 +49,7 @@ type ExclusiveCallbacks =
    * Provides the verification result data.
    */
   | {
-      onVPProcessed: (vpResult: VerificationResults) => void;
+      onVPProcessed: (VPResult: VerificationResults) => void;
       onVPReceived?: never;
     };
 
@@ -90,7 +63,7 @@ interface InputDescriptor {
   constraints?: {};
 }
 
-interface PresentationDefinition {
+export interface PresentationDefinition {
   id?: string;
   purpose: string;
   format?: {
@@ -118,6 +91,12 @@ export type OpenID4VPVerificationProps = ExclusivePresentationDefinition &
     verifyServiceUrl: string;
 
     /**
+
+   The client identifier for relaying party.
+   */
+    clientId: string;
+
+    /**
   
   The protocol being used for verification (e.g., OpenID4VP).
   */
@@ -128,6 +107,12 @@ export type OpenID4VPVerificationProps = ExclusivePresentationDefinition &
   A unique identifier for the transaction.
   */
     transactionId?: string;
+
+    /** 
+  Indicates whether the same device flow is enabled.
+  Defaults to true, allowing verification on the same device.
+  */
+    isSameDeviceFlowEnabled?: boolean;
 
     /**
   
@@ -151,5 +136,16 @@ export type OpenID4VPVerificationProps = ExclusivePresentationDefinition &
      * Callback triggered when an error occurs during the verification process.
      * This is a required field to ensure proper error handling.
      */
-    onError: (error: Error) => void;
+    onError: (error: AppError) => void;
   };
+
+export interface SessionState {
+  requestId: string;
+  transactionId: string;
+}
+
+export type AppError = {
+  errorMessage: string;
+  errorCode?: string;
+  transactionId?: string | null;
+};

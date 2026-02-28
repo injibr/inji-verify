@@ -6,22 +6,12 @@ export type QrScanResult = {
 
 export type QrReadStatus = "SUCCESS" | "NOT_READ" | "FAILED";
 
-export type VcStatus = "SUCCESS" | "INVALID" | "EXPIRED" | "TIMEOUT";
-
-export type RequestStatus = "ACTIVE" | "VP_SUBMITTED" | "EXPIRED";
+export type VcStatus = "SUCCESS" | "INVALID" | "EXPIRED" | "REVOKED";
 
 export type VerificationStep = {
   label: string;
   description: string;
 };
-
-export type CardPositioning = {
-  top?: number;
-  right?: number;
-  bottom?: number;
-  left?: number;
-};
-
 export type AlertSeverity =
   | "success"
   | "info"
@@ -30,13 +20,17 @@ export type AlertSeverity =
   | undefined;
 
 export type AlertInfo = {
+  title?: string;
+  errorCode?: string;
+  errorReason?: string;
+  referenceId?: string;
   message?: string;
   severity?: AlertSeverity;
   open?: boolean;
   autoHideDuration?: number;
 };
 
-export type VerificationMethod = "SCAN" | "UPLOAD" | "VERIFY" | "TO_BE_SELECTED";
+export type VerificationMethod = "SCAN" | "UPLOAD" | "VERIFY";
 
 export type InternetConnectionStatus =
   | "ONLINE"
@@ -67,11 +61,8 @@ export type OvpFlowData = {
   presentationSubmission?: any;
   vpToken?: any;
 };
-
-export type VerificationTrigger = {};
-
 export type VerificationResult = {
-  vc?: VC;
+  vc?: AnyVc;
   vcStatus?: VcStatus;
 };
 
@@ -86,9 +77,6 @@ export interface VerificationStepsContentType {
   VERIFY: VerificationStep[];
   TO_BE_SELECTED: VerificationStep[];
 }
-
-export type MethodType = "GET" | "POST" | "PUT" | "DELETE";
-
 export interface claim {
   name: string;
   type: string;
@@ -107,7 +95,7 @@ interface InputDescriptor {
   constraints?: {};
 }
 
-interface PresentationDefinition {
+export interface PresentationDefinition {
   id?: string;
   purpose: string;
   format?: {
@@ -118,44 +106,22 @@ interface PresentationDefinition {
   input_descriptors: InputDescriptor[];
 }
 
-interface BodyType {
-  transactionId: string;
-  clientId: string;
-  presentationDefinition: PresentationDefinition;
-  nonce: string;
-}
-
-export type ApiRequest = {
-  url: (...args: string[]) => string;
-  methodType: MethodType;
-  headers: (...args: string[]) => Record<string, string>;
-  body?: BodyType;
-};
-
-export type VpRequestStatusApi = {
-  url: (reqId: string) => string;
-  methodType: MethodType;
-  headers: (...args: string[]) => Record<string, string>;
-  body?: BodyType;
-};
-
 export type VpSubmissionResultInt = {
-  vc: VCWrapper;
+  vc: LdpVc | object;
   vcStatus: VcStatus;
   view?: boolean;
 };
 
 export type VerifyState = {
   isLoading: boolean;
-  status: string;
-  qrData: string;
-  txnId: string;
-  reqId: string;
+  flowType: "crossDevice" | "sameDevice";
   method: string;
   activeScreen: number;
   verificationSubmissionResult: VpSubmissionResultInt[];
   SelectionPanel: boolean;
+  isShowResult: boolean;
   selectedClaims: claim[];
+  originalSelectedClaims: claim[];
   unVerifiedClaims: claim[];
   sharingType: VCShareType;
   isPartiallyShared: boolean;
@@ -167,21 +133,6 @@ export enum VCShareType {
   MULTIPLE = "multiple",
 }
 
-export type QrData = {
-  transactionId: string;
-  requestId: string;
-  authorizationDetails: {
-    responseType: string;
-    clientId: string;
-    presentationDefinition: object;
-    presentationDefinitionUri?: string;
-    responseUri: string;
-    nonce: string;
-    iat: number;
-  };
-  expiresAt: number;
-};
-
 export type QrCodeProps = {
   title: string;
   data: string;
@@ -190,7 +141,16 @@ export type QrCodeProps = {
   status: "SUCCESS" | "EXPIRED" | "INVALID";
 };
 
-export type VC = {
+export type RenderMethod = {
+  renderSuite: string;
+  template: {
+    id: string;
+    mediaType: string;
+  };
+  type: string;
+};
+
+export type LdpVc = {
   "@context": string[];
   credentialSubject: credentialSubject;
   expirationDate: string;
@@ -205,18 +165,15 @@ export type VC = {
     verificationMethod: string;
   };
   type: string[];
+  renderMethod?: RenderMethod[];
 };
 
-export type VCWrapper = {
-  credential: VC
-  credentialConfigurationId: string;
-  issuerLogo: {
-    url: string;
-    alt_text: string;
-  };
-  wellKnown: string;
+export type SdJwtVc = {
+  regularClaims: Record<string, any>;
+  disclosedClaims: Record<string, any>;
 };
 
+export type AnyVc = LdpVc | SdJwtVc;
 export type credentialSubject = {
   benefits: string[];
   gender: string;
@@ -229,13 +186,4 @@ export type credentialSubject = {
   id: string;
   email: string;
   policyExpiresOn: string;
-};
-
-export interface fetchStatusResponse {
-  status: string;
-}
-
-export type Detail = {
-  key: string;
-  value: string;
 };

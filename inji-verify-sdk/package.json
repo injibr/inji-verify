@@ -1,7 +1,10 @@
 {
   "name": "@mosip/react-inji-verify-sdk",
-  "version": "0.12.3",
+  "version": "0.16.0",
   "description": "A react component library to perform Inji verify tasks, such as OpenId4VP sharing, Reading VC QR codes",
+  "sideEffects": [
+    "*.css"
+  ],
   "main": "dist/index.js",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -11,7 +14,8 @@
   "scripts": {
     "build": "webpack --config webpack.config.js && tsc --declaration --emitDeclarationOnly --outDir dist",
     "test": "jest test --coverage",
-    "verify": "npm run build"
+    "verify": "npm run build",
+    "localPublish": "npm version patch && npm run build && npm publish --access public --registry http://localhost:4873"
   },
   "repository": {
     "type": "git",
@@ -31,6 +35,7 @@
     "@babel/preset-env": "^7.26.9",
     "@babel/preset-react": "^7.26.3",
     "@babel/preset-typescript": "^7.27.0",
+    "@svgr/webpack": "^8.1.0",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",
@@ -56,10 +61,19 @@
     "webpack-cli": "^6.0.1"
   },
   "peerDependencies": {
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
   },
   "dependencies": {
-    "qrcode.react": "^4.1.0"
+    "@ant-design/icons": "^6.0.0",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
+    "@mosip/pixelpass": "^0.6.0",
+    "@mui/material": "^7.1.0",
+    "ajv": "^8.17.1",
+    "pdfjs-dist": "5.2.133",
+    "qrcode.react": "^4.1.0",
+    "react-icons": "^5.5.0",
+    "zxing-wasm": "^2.1.2"
   }
 }

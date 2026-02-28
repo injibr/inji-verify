@@ -1,13 +1,31 @@
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import {
+  AppError,
   OpenID4VPVerificationProps,
-  QrData,
-  VerificationResult,
+  SessionState,
   VerificationResults,
   VerificationStatus,
-  VPRequestBody,
 } from "./OpenID4VPVerification.types";
-import React, { useCallback, useEffect, useState } from "react";
+import { vpRequest, vpRequestStatus, vpResult } from "../../utils/api";
+import "./OpenID4VPVerification.css";
+import { isSdJwt } from "../../utils/utils";
+import { QrData } from "../../types/OVPSchemeQrData";
+
+export const isMobileDevice = (): boolean => {
+  const userAgent = navigator.userAgent;
+
+  const isMobileUA = /Android.*Mobile|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+    userAgent
+  );
+
+  const isTabletUA =
+    /iPad/i.test(userAgent) ||
+    (/Macintosh/i.test(userAgent) && "ontouchend" in document) || // iPad iOS13+ (real)
+    (/Android/i.test(userAgent) && !/Mobile/i.test(userAgent)); // Android tablet
+
+  return isMobileUA || isTabletUA;
+};
 
 const OpenID4VPVerification: React.FC<OpenID4VPVerificationProps> = ({
   triggerElement,
@@ -15,172 +33,233 @@ const OpenID4VPVerification: React.FC<OpenID4VPVerificationProps> = ({
   protocol,
   presentationDefinitionId,
   presentationDefinition,
+  transactionId,
   onVPReceived,
   onVPProcessed,
   qrCodeStyles,
   onQrCodeExpired,
   onError,
+  clientId,
+  isSameDeviceFlowEnabled = true,
 }) => {
-  const [txnId, setTxnId] = useState<string | null>(null);
-  const [reqId, setReqId] = useState<string | null>(null);
   const [qrCodeData, setQrCodeData] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
-  const OPENID4VP_PROTOCOL = `${protocol || "openid4vp://"}authorize?`;
+  const isActiveRef = useRef(false);
+  const sessionStateRef = useRef<SessionState | null>(null);
 
-  const generateNonce = (): string => {
-    return btoa(Date.now().toString());
-  };
+  const shouldShowQRCode = !loading && qrCodeData;
 
-  const VPFormat = {
-    ldp_vp: {
-      proof_type: [
-        "Ed25519Signature2018",
-        "Ed25519Signature2020",
-        "RsaSignature2018",
-      ],
-    },
-  };
+  const DEFAULT_PROTOCOL = "openid4vp://";
 
-  const getPresentationDefinition = useCallback(
-    (data: QrData) => {
-      const params = new URLSearchParams();
-      params.set("client_id", data.authorizationDetails.clientId);
-      params.set("response_type", data.authorizationDetails.responseType);
-      params.set("response_mode", "direct_post");
-      params.set("nonce", data.authorizationDetails.nonce);
-      params.set("state", data.requestId);
-      params.set(
-        "response_uri",
-        verifyServiceUrl + data.authorizationDetails.responseUri
-      );
-      if (data.authorizationDetails.presentationDefinitionUri) {
-        params.set(
-          "presentation_definition_uri",
-          verifyServiceUrl + data.authorizationDetails.presentationDefinitionUri
-        );
-      } else {
-        params.set(
-          "presentation_definition",
-          JSON.stringify(data.authorizationDetails.presentationDefinition)
-        );
-      }
-      params.set(
-        "client_metadata",
-        JSON.stringify({ client_name: window.location.origin, vp_formats: VPFormat })
-      );
-      return params.toString();
-    },
-    [verifyServiceUrl]
+  const VPFormat = useMemo(
+    () => ({
+      ldp_vp: {
+        proof_type: [
+          "Ed25519Signature2018",
+          "Ed25519Signature2020",
+          "RsaSignature2018",
+        ],
+      },
+      "vc+sd-jwt": {
+        "sd-jwt_alg_values": ["RS256", "ES256", "ES256K", "EdDSA"],
+        "kb-jwt_alg_values": ["RS256", "ES256", "ES256K", "EdDSA"],
+      },
+    }),
+    []
   );
 
-  const fetchVpResult = useCallback(async () => {
-    try {
-      if (onVPProcessed) {
-        const response = await fetch(`${verifyServiceUrl}/vp-result/${txnId}`);
-        if (response.status !== 200)
-          throw new Error("Failed to fetch VP result");
-        const vpVerificationResult = await response.json();
-        const parsedVcResults: VerificationResult[] = vpVerificationResult.vcResults.map(
-          (vcResult: { vc: any; verificationStatus: VerificationStatus }) => {
-            return {
-              vc: JSON.parse(vcResult.vc),
-              vcStatus: vcResult.verificationStatus,
-            };
-          }
+  const clearSessionData = useCallback(() => {
+    sessionStateRef.current = null;
+  }, []);
+
+  const resetState = useCallback(() => {
+    setQrCodeData(null);
+    setLoading(false);
+    isActiveRef.current = false;
+    clearSessionData();
+  }, []);
+
+  const getPresentationDefinitionParams = useCallback(
+    (data: QrData) => {
+      const params = new URLSearchParams();
+      params.set("client_id", clientId);
+      if (data.requestUri) {
+        params.set("request_uri", data.requestUri);
+      } else if (data.authorizationDetails) {
+        params.set("state", data.requestId);
+        params.set("response_mode", data.authorizationDetails.responseMode);
+        params.set("response_type", data.authorizationDetails.responseType);
+        params.set("nonce", data.authorizationDetails.nonce);
+        params.set("response_uri", data.authorizationDetails.responseUri);
+        if (data.authorizationDetails.presentationDefinitionUri) {
+          params.set(
+            "presentation_definition_uri",
+            verifyServiceUrl + data.authorizationDetails.presentationDefinitionUri
+          );
+        } else {
+          params.set(
+            "presentation_definition",
+            JSON.stringify(data.authorizationDetails.presentationDefinition)
+          );
+        }
+        params.set(
+          "client_metadata",
+          JSON.stringify({
+            client_name: clientId,
+            vp_formats: VPFormat,
+          })
         );
-        
-        const vpResult: VerificationResults = {
-          vcResults: parsedVcResults,
-          vpResultStatus: vpVerificationResult.vpResultStatus,
-        };
-        onVPProcessed(vpResult);
-        setTxnId(null);
-        setReqId(null);
-        setQrCodeData(null);
       }
-      if (onVPReceived && txnId) {
-        onVPReceived(txnId);
-        setTxnId(null);
-        setReqId(null);
-        setQrCodeData(null);
-      }
-    } catch (error) {
-      onError(error as Error);
-      setTxnId(null);
-      setReqId(null);
-      setQrCodeData(null);
-      setLoading(false);
-    }
-  }, [onVPProcessed, onVPReceived, onError, txnId, verifyServiceUrl]);
+      return params.toString();
+    },
+    [verifyServiceUrl, clientId]
+  );
 
-  const createVpRequest = useCallback(async () => {
-    if (presentationDefinition?.input_descriptors.length !== 0) {
+  const fetchVPResult = useCallback(
+    async (txnId: string) => {
+      if (!isActiveRef.current) return;
+      setLoading(true);
       try {
-        addStylesheetRules();
-        setLoading(true);
-        const requestBody: VPRequestBody = {
-          clientId: window.location.origin,
-          nonce: generateNonce(),
-        };
+        if (onVPProcessed && txnId) {
+          const vcResults = await vpResult(verifyServiceUrl, txnId);
+          if (!isActiveRef.current) return;
 
-        if (txnId) requestBody.transactionId = txnId;
-        if (presentationDefinitionId)
-          requestBody.presentationDefinitionId = presentationDefinitionId;
-        if (presentationDefinition)
-          requestBody.presentationDefinition = presentationDefinition;
+          if (vcResults && vcResults.length > 0) {
+            const VPResult: VerificationResults = vcResults.map(
+              (vcResult: { vc: any; verificationStatus: VerificationStatus }) => ({
+                vc: isSdJwt(vcResult.vc) ? vcResult.vc : JSON.parse(vcResult.vc),
+                vcStatus: vcResult.verificationStatus,
+              })
+            );
+            onVPProcessed(VPResult);
+            resetState();
+            return;
+          } else {
+            throw new Error("Failed to get the VP result");
+          }
+        }
 
-        const response = await fetch(`${verifyServiceUrl}/vp-request`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(requestBody),
-        });
-
-        if (response.status !== 201)
-          throw new Error("Failed to create VP request");
-        const data: QrData = await response.json();
-        const qrData = OPENID4VP_PROTOCOL + getPresentationDefinition(data);
-        setTxnId(data.transactionId);
-        setReqId(data.requestId);
-        setQrCodeData(qrData);
-        setLoading(false);
+        if (onVPReceived && txnId && isActiveRef.current) {
+          onVPReceived(txnId);
+          resetState();
+        }
       } catch (error) {
-        setLoading(false);
-        onError(error as Error);
+        if (isActiveRef.current) {
+          onError(error as AppError);
+          resetState();
+        }
       }
+    },
+    [verifyServiceUrl, onVPProcessed, onVPReceived, onError]
+  );
+
+  const fetchVPStatus = useCallback(
+    async (reqId: string, txnId: string) => {
+      if (!isActiveRef.current || !sessionStateRef.current) return;
+
+      try {
+        const response = await vpRequestStatus(verifyServiceUrl, reqId);
+
+        if (response.status === "ACTIVE") {
+          fetchVPStatus(reqId, txnId);
+        } else if (response.status === "VP_SUBMITTED") {
+          fetchVPResult(txnId);
+        } else if (response.status === "EXPIRED") {
+          resetState();
+          onQrCodeExpired();
+        }
+      } catch (error) {
+        if (isActiveRef.current) {
+          setLoading(false);
+          resetState();
+          onError(error as AppError);
+        }
+      }
+    },
+    [
+      verifyServiceUrl,
+      onQrCodeExpired,
+      onError,
+      fetchVPResult
+    ]
+  );
+
+  const createVPRequest = useCallback(async () => {
+    if (isActiveRef.current) return;
+    isActiveRef.current = true;
+    setLoading(true);
+    try {
+      const data = await vpRequest(
+        verifyServiceUrl,
+        clientId,
+        transactionId ?? undefined,
+        presentationDefinitionId,
+        presentationDefinition
+      );
+
+      sessionStateRef.current = {
+        requestId: data.requestId,
+        transactionId: data.transactionId,
+      };
+
+      if (!isSameDeviceFlowEnabled || !isMobileDevice()) {
+        fetchVPStatus(data.requestId, data.transactionId);
+      }
+      return getPresentationDefinitionParams(data);
+    } catch (error) {
+      onError(error as AppError);
+      resetState();
     }
   }, [
-    presentationDefinition,
-    txnId,
-    presentationDefinitionId,
     verifyServiceUrl,
-    OPENID4VP_PROTOCOL,
-    getPresentationDefinition,
+    transactionId,
+    presentationDefinitionId,
+    presentationDefinition,
+    getPresentationDefinitionParams,
     onError,
+    clientId,
   ]);
 
-  const fetchStatus = useCallback(async () => {
-    try {
-      const response = await fetch(
-        `${verifyServiceUrl}/vp-request/${reqId}/status`
-      );
-      if (response.status !== 200) throw new Error("Failed to fetch status");
-      const data = await response.json();
-      if (data.status === "ACTIVE") {
-        fetchStatus();
-      }
-      if (data.status === "VP_SUBMITTED") {
-        fetchVpResult();
-      } else if (data.status === "EXPIRED") {
-        setTxnId(null);
-        setReqId(null);
-        setQrCodeData(null);
-        onQrCodeExpired();
-      }
-    } catch (error) {
-      setLoading(false);
-      onError(error as Error);
+  const handleTriggerClick = () => {
+    if (isSameDeviceFlowEnabled && isMobileDevice()) {
+      startVerification();
+    } else {
+      handleGenerateQRCode();
     }
-  }, [verifyServiceUrl, reqId, onQrCodeExpired, onError, fetchVpResult]);
+  };
+
+  const handleGenerateQRCode = async () => {
+    const pdParams = await createVPRequest();
+    if (pdParams) {
+      const qrData = `${protocol || DEFAULT_PROTOCOL}authorize?${pdParams}`;
+      setQrCodeData(qrData);
+      setLoading(false);
+    }
+  };
+
+  const startVerification = async () => {
+    const pdParams = await createVPRequest();
+    if (pdParams) {
+      window.location.href = `${protocol || DEFAULT_PROTOCOL }authorize?${pdParams}`;
+    }
+  };
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        if (sessionStateRef.current && isActiveRef.current) {
+          const { requestId, transactionId } = sessionStateRef.current;
+          fetchVPStatus(requestId, transactionId);
+        }
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [fetchVPStatus]);
 
   useEffect(() => {
     if (!presentationDefinitionId && !presentationDefinition) {
@@ -209,11 +288,8 @@ const OpenID4VPVerification: React.FC<OpenID4VPVerificationProps> = ({
     if (!onError) {
       throw new Error("onError callback is required");
     }
-    if (!triggerElement) {
-      createVpRequest();
-    }
   }, [
-    createVpRequest,
+    createVPRequest,
     onError,
     onQrCodeExpired,
     onVPProcessed,
@@ -224,59 +300,42 @@ const OpenID4VPVerification: React.FC<OpenID4VPVerificationProps> = ({
   ]);
 
   useEffect(() => {
-    if (reqId) {
-      fetchStatus();
+    if (!triggerElement) {
+      if (isSameDeviceFlowEnabled && isMobileDevice()) {
+        startVerification();
+      } else {
+        handleGenerateQRCode();
+      }
     }
-  }, [fetchStatus, reqId]);
+  }, [triggerElement, isSameDeviceFlowEnabled]);
 
-  function addStylesheetRules() {
-    let keyframes = `@keyframes spin {0% {transform: rotate(0deg);}100% {transform: rotate(360deg);}}`;
-    var styleEl = document.createElement("style");
-    document.head.appendChild(styleEl);
-    var styleSheet = styleEl.sheet;
-    styleSheet?.insertRule(keyframes, 0);
-  }
+  useEffect(() => {
+    return () => {
+      isActiveRef.current = false;
+      clearSessionData();
+    };
+  }, [clearSessionData]);
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "center",
-        alignItems: "center",
-        minWidth: "100%",
-      }}
-    >
-      {triggerElement && !qrCodeData && !loading ? (
-        <div onClick={createVpRequest} style={{ cursor: "pointer" }}>
+    <div className={"ovp-root-div-container"}>
+      {loading && <div id="ovp-loader" className={"ovp-loader"} />}
+
+      {!loading && triggerElement && !qrCodeData && (
+        <div onClick={handleTriggerClick} style={{ cursor: "pointer" }}>
           {triggerElement}
         </div>
-      ) : null}
-      {loading && (
-        <div
-          style={{
-            width: "40px",
-            height: "40px",
-            border: "4px solid #ccc",
-            borderTop: "4px solid #333",
-            borderRadius: "50%",
-            animation: "spin 1s linear infinite",
-            margin: "20px auto",
-          }}
-        ></div>
       )}
-      {!loading && qrCodeData && (
-        <div data-testid="qr-code">
-          <QRCodeSVG
-            value={qrCodeData}
-            size={qrCodeStyles?.size || 200}
-            level={qrCodeStyles?.level || "L"}
-            bgColor={qrCodeStyles?.bgColor || "#ffffff"}
-            fgColor={qrCodeStyles?.fgColor || "#000000"}
-            marginSize={qrCodeStyles?.margin || 10}
-            style={{ borderRadius: qrCodeStyles?.borderRadius || 10 }}
-          />
-        </div>
+
+      {shouldShowQRCode && (
+        <QRCodeSVG
+          value={qrCodeData}
+          size={qrCodeStyles?.size || 200}
+          level={qrCodeStyles?.level || "L"}
+          bgColor={qrCodeStyles?.bgColor || "#ffffff"}
+          fgColor={qrCodeStyles?.fgColor || "#000000"}
+          marginSize={qrCodeStyles?.margin || 10}
+          style={{ borderRadius: qrCodeStyles?.borderRadius || 10 }}
+        />
       )}
     </div>
   );

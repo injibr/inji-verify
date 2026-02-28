@@ -51,8 +51,8 @@ service:
 
 image:
   registry: docker.io
-  repository: mosipqa/inji-verify-ui
-  tag: 0.12.x
+  repository: mosipid/inji-verify-ui
+  tag: 0.16.0
 
   ## Specify a imagePullPolicy
   ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
@@ -245,9 +245,7 @@ extraEnvVars: []
 ## ConfigMap with extra environment variables
 ##
 extraEnvVarsCM:
-  - global
-  - config-server-share
-  - artifactory-share
+  - inji-stack-config
 
 ## Secret with extra environment variables
 ##
@@ -306,8 +304,8 @@ volumePermissions:
   enabled: false
   image:
     registry: docker.io
-    repository: bitnami/bitnami-shell
-    tag: "10"
+    repository: mosipint/os-shell
+    tag: "12-debian-12-r46"
     pullPolicy: Always
     ## Optionally specify an array of imagePullSecrets.
     ## Secrets must be manually created in the namespace.

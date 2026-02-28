@@ -1,3 +1,6 @@
+dbUserPasswords:
+  dbuserPassword: ""
+
 databases:
   inji_verify:
     enabled: true
@@ -9,4 +12,5 @@ databases:
         name: postgres-postgresql
         key: postgres-password
     dml: 1
-    branch: v0.12.3
+    repoUrl: https://github.com/mosip/inji-verify.git
+    branch: v0.16.0

@@ -6,6 +6,9 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.FindBy;
 import org.openqa.selenium.support.PageFactory;
+
+import api.InjiVerifyConfigManager;
+
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.JavascriptException;
@@ -16,13 +19,15 @@ import org.openqa.selenium.NoSuchElementException;
 
 
 import base.BasePage;
+import utils.WaitUtil;
 
 public class HomePage extends BasePage {
 
-	private WebDriver driver;
+    private static final String stayProtectedIssuer = InjiVerifyConfigManager.getproperty("stayProtectedIssuer");
+    private static final String stayProtectedIssuerCredentialType = InjiVerifyConfigManager.getproperty("stayProtectedIssuerCredentialType");
 
 	public HomePage(WebDriver driver) {
-		this.driver = driver;
+		super(driver);
 		PageFactory.initElements(driver, this);
 	}
 
@@ -38,11 +43,20 @@ public class HomePage extends BasePage {
 	@FindBy(xpath = "//a[@id='home-button']")
 	WebElement homeButton;
 
+	@FindBy(id = "fullname-value")
+	WebElement fullNameValue;
+
+	@FindBy(id = "gender-value")
+	WebElement fullGenderValue;
+
 	@FindBy(xpath = "//a[@id='verify-credentials-button']")
 	WebElement Credentialsbutton;
 
 	@FindBy(xpath = "//button[@id='help-button']")
 	WebElement helpButton;
+	
+	@FindBy(xpath = "//button[.//span[text()='Continue as Guest']]")
+	WebElement continueButton;
 
 	@FindBy(xpath = "(//*[@id='help-button']//*[@class='mx-1.5 rotate-180']//*)[1]")
 	WebElement Expansionbutton;
@@ -107,11 +121,8 @@ public class HomePage extends BasePage {
 	@FindBy(xpath = "//p[@data-testid='IntroBox-SubText']")
 	WebElement IntroSubText;
 
-	@FindBy(xpath = "//h3[@data-testid='ItemBox-Text']")
+	@FindBy(xpath = "//*[@data-testid='ItemBox-Text']")
 	WebElement mosipCrdentials;
-
-	@FindBy(xpath = "(//span[contains(@class, 'bg-gradient-to-r') and contains(text(), 'Get Started')])[1]")
-	WebElement getStartedButton;
 
 	@FindBy(xpath = "(//label[contains(@class, 'w-full h-full') and contains(text(), 'Once')])[1]")
 	WebElement getValidityDropdown;
@@ -119,8 +130,11 @@ public class HomePage extends BasePage {
 	@FindBy(xpath = "(//label[contains(@data-testid, 'DataShareContent-Validity-Times-DropDown-NoLimit') and contains(text(), 'No Limit')])[1]")
 	WebElement getOnNoLimit;
 
-	@FindBy(xpath = "(//button[contains(@data-testid, 'DataShareFooter-Success-Button') and contains(text(), 'Proceed')])[1]")
+	@FindBy(xpath = "//button[contains(@data-testid, 'DataShareFooter-Success-Button')]")
 	WebElement getOnOnProceed;
+	
+	@FindBy(xpath = "//h3[@data-testid='ItemBox-Text' and text()='Health Insurance']")
+	WebElement healthInsurance;
 
 	@FindBy(xpath = "//div[@data-testid='ItemBox-Outer-Container-0']")
 	WebElement isMosipNationalId;
@@ -134,7 +148,7 @@ public class HomePage extends BasePage {
 	@FindBy(xpath = "//button[@id='verify_otp']")
 	WebElement verifyOtp;
 
-	@FindBy(xpath = "//p[@data-testid='DownloadResult-Title']")
+	@FindBy(xpath = "//p[@data-testid='title-download-result']")
 	WebElement succsessMessage;
 
 	@FindBy(xpath = "//label[text() = 'Enter Full Name']")
@@ -143,11 +157,17 @@ public class HomePage extends BasePage {
 	@FindBy(xpath = "//button[@id='verify_form']")
 	WebElement verifyButton;
 
-	@FindBy(xpath = "//*[@data-testid='DownloadResult-Home-Button']")
+	@FindBy(xpath = "//button[@id='home-button']")
 	WebElement HomeButton;
+
+	@FindBy(xpath = "//*[@data-testid='HomeBanner-Guest-Login']")
+	WebElement guestLogin;
 
 	@FindBy(xpath = "//p[text() = 'Something went wrong with your request. Please check and try again.']")
 	WebElement errorMeassage;
+
+	@FindBy(xpath = "(//span[contains(@class, 'bg-gradient-to-r') and contains(text(), 'Get Started')])[1]")
+	WebElement getStartedButton;
 
 
 	public Boolean isLogoDisplayed() {
@@ -188,21 +208,29 @@ public class HomePage extends BasePage {
 		return isElementIsVisible(driver, Expansionbutton);
 	}
 
-	public void ClickonHomeButton() {
+	public void clickOnHelpButton() {
 		clickOnElement(driver, helpButton);
+	}
+	
+	public void clickOnContinueButton() {
+		clickOnElement(driver, continueButton);
 	}
 
 	public Boolean isExpansionbuttonDisplayedAfter() {
 		return isElementIsVisible(driver, ExpansionbuttonAfter);
 	}
 
-	public void verifyHelpOptionLinks() {
-		verifyHomePageLinks(driver, HelpOptionLinks);
+	public Boolean verifyHelpOptionLinks() {
+		return verifyHomePageLinks(driver, HelpOptionLinks);
 
 	}
 
 	public void minimizeHelpButton() {
 		clickOnElement(driver, minimizeHelpButton);
+	}
+
+	public void clickOnHomeButton() {
+		clickOnElement(driver, homeButton);
 	}
 
 	public Boolean isUploadQRButtonVisible() {
@@ -269,13 +297,18 @@ public class HomePage extends BasePage {
 		return isElementIsVisible(driver, UploadButton);
 	}
 
+		public Boolean isUploadButtonIsVisibleAfterIdle() {
+		driver.navigate().refresh();
+		return isElementIsVisibleAfterIdle(driver, UploadButton);
+	}
+
 	public String getFormatConstraintText() {
 		System.out.println(getText(driver, FormatConstraintText));
 		return getText(driver, FormatConstraintText);
 
 	}
 
-	public void ClickonQRUploadButton() {
+	public void clickOnQRUploadButton() {
 		clickOnElement(driver, QRUploadButton);
 	}
 
@@ -289,8 +322,15 @@ public class HomePage extends BasePage {
 		clickOnElement(driver,mosipCrdentials);
 	}
 
+    public void clickOnStayProtectedCredentials() {
+        WebElement stayProtectedIssuerElement = driver.findElement(By.xpath("//h3[text()='" + stayProtectedIssuer + "']"));
+        clickOnElement(driver,stayProtectedIssuerElement);
+    }
+
 	public void clickOnGetStartedButton() {
+		if(isElementIsVisible(driver,getStartedButton)) {
 		clickOnElement(driver,getStartedButton);
+		}
 	}
 
 	public void clickOnValidityDropdown() {
@@ -320,6 +360,13 @@ public class HomePage extends BasePage {
 		}
 		clickOnElement(driver, isMosipNationalId);
 	}
+
+	public void clickOnStayProtectedCredentialType() {
+       		// Use explicit wait (configured via explicitWaitTimeout) instead of Thread.sleep
+		WaitUtil.waitForClickability(driver, healthInsurance);
+		clickOnElement(driver, healthInsurance);
+	}
+
 
 	public void clickOnOnProceed() {
 		try {
@@ -355,18 +402,31 @@ public class HomePage extends BasePage {
 	}
 
 	public String isSuccessMessageDisplayed() {
-		try {
-			Thread.sleep(6000);
-			;
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return getText(driver, succsessMessage);
+	    String message = "";
+	    int retryCount = 0;
+
+	    while (retryCount < 2) {
+	        try {
+	            Thread.sleep(9000);
+	        } catch (InterruptedException e) {
+	            e.printStackTrace();
+	        }
+
+	        message = getText(driver, succsessMessage);
+	        if ("Success!".equalsIgnoreCase(message.trim())) {
+	            break;
+	        } else {
+	            retryCount++;
+	        }
+	    }
+
+	    return message;
 	}
 
+
 	public  void openNewTab(){
-		((JavascriptExecutor) driver).executeScript("window.open('https://injiweb.qa-inji1.mosip.net/')");
+		String url = InjiVerifyConfigManager.getInjiWebUi();
+		((JavascriptExecutor) driver).executeScript("window.open(arguments[0])", url);
 		Set<String> allWindowHandles = driver.getWindowHandles();
 		System.out.println(allWindowHandles);
 		if (allWindowHandles.size() >= 2) {
@@ -376,7 +436,7 @@ public class HomePage extends BasePage {
 		}
 	}
 
-	public  void SwitchToWebTab(){
+	public  void switchToWebTab(){
 		Set<String> allWindowHandles = driver.getWindowHandles();
 		System.out.println(allWindowHandles);
 		if (allWindowHandles.size() >= 2) {
@@ -387,7 +447,7 @@ public class HomePage extends BasePage {
 		}
 	}
 
-	public  void SwitchToVerifyTab(){
+	public  void switchToVerifyTab(){
 		Set<String> allWindowHandles = driver.getWindowHandles();
 		System.out.println(allWindowHandles);
 		if (allWindowHandles.size() >= 2) {
@@ -403,43 +463,50 @@ public class HomePage extends BasePage {
 	public void enterFullName(String string) {
 		enterText(driver, By.xpath("//input[@id='_form_fullName']"), string);
 	}
-	public void selectDateOfBirth() {
-		driver.findElement(By.xpath("//input[@id='_form_fullName']")).sendKeys(Keys.TAB);
-		driver.findElement(By.id("_form_dob")).sendKeys("01/01/2025");
+    public void selectDateOfBirth(String string) {
 
-
-		driver.findElement(By.xpath("//input[@id='_form_dob']")).click();
-		try {
-			Thread.sleep(2000);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		System.out.println(driver.getWindowHandles());
-
-		JavascriptExecutor js = (JavascriptExecutor) driver;
-		String xpath = "//*[contains(@text,'SET')]"; // Improved XPath (consider adding specificity)
-
-		try {
-			js.executeScript("document.evaluate(arguments[0], document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue.click()", xpath);
-		} catch (NoSuchElementException e) {
-			System.out.println("Element not found with XPath: " + xpath);
-		} catch (JavascriptException e) {
-			System.out.println("JavaScript error: " + e.getMessage());
-		}
-	}
+        driver.findElement(By.xpath("//input[@id='_form_fullName']")).sendKeys(Keys.TAB);
+        driver.findElement(By.id("_form_dob")).sendKeys(string);
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
 
 	public void clickOnLogin() {
 		clickOnElement(driver,verifyButton );
 	}
 
-	public void clickOnHomebutton() {
-		clickOnElement(driver,HomeButton );
-	}
-
 	public Boolean isErrorMessageVisible() {
 		return isElementIsVisible(driver, errorMeassage);
 	}
+
+	public void clickOnContinueAsGuest() {
+		clickOnElement(driver,guestLogin );
+	}
+
+	public String getNameValueInArabic() {
+		return getText(driver, fullNameValue);
+
+	}
+
+	public String getNameValueInFrench() {
+		return getText(driver, fullNameValue);
+
+	}
+
+	public String getGenderValueInArabic() {
+		return getText(driver, fullGenderValue);
+
+	}
+
+	public String getGenderValueInFrench() {
+		return getText(driver, fullGenderValue);
+
+	}
+
 
 
 	}

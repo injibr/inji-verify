@@ -1,5 +1,4 @@
 import React from "react";
-import PageTemplate from "../components/PageTemplate";
 import VerificationProgressTracker from "../components/Home/VerificationProgressTracker";
 import { VpVerification } from "../components/Home/VerificationSection/VpVerification";
 import SelectionPanel from "../components/Home/VerificationSection/commons/SelectionPanel";
@@ -14,7 +13,6 @@ export function Verify() {
   const openSelection = useVerifyFlowSelector((state) => state.SelectionPanel);
   const dispatch = useAppDispatch();
   const unverifiedClaims = useVerifyFlowSelector((state) => state.unVerifiedClaims );
-  const isPartiallyShared = useVerifyFlowSelector((state) => state.isPartiallyShared );
   const activeScreen = useVerifyFlowSelector((state) => state.activeScreen );
 
   const handleRequestCredentials = () => {
@@ -31,10 +29,10 @@ export function Verify() {
 
   const renderRequestCredentialsButton = () => (
     <Button
-      id="request-credentials-button"
+      id="stepper-request-credentials-button"
       title={t("rqstButton")}
-      className={`w-[300px] mx-auto lg:ml-[76px] mt-10 hidden lg:block`}
-      fill
+      className={`w-[300px] mx-auto lg:ms-[76px] mt-10 hidden lg:block`}
+      variant="fill"
       onClick={handleRequestCredentials}
       disabled={activeScreen === 3 }
     />
@@ -46,7 +44,6 @@ export function Verify() {
         id="missing-credentials-button"
         title={t("missingCredentials")}
         className={`w-[250px]`}
-        fill
         onClick={HandelGenerateQr}
       />
       <Button
@@ -54,23 +51,22 @@ export function Verify() {
         title={t("restartProcess")}
         className={`w-[200px]`}
         onClick={HandelRestartProcess}
+        variant="outline"
       />
     </div>
   );
 
 
   return (
-    <PageTemplate>
-      <div className="grid grid-cols-13">
-        <div className="col-start-1 col-end-13 lg:col-end-6 lg:bg-pageBackGroundColor xs:w-[100vw] lg:max-w-[50vw] lg:pb-[100px]">
+      <div className="grid grid-cols-13 gap-y-8 lg:gap-0">
+        <div className="col-start-1 col-end-13 lg:col-end-6 lg:bg-pageBackGroundColor w-full lg:max-w-[50vw] lg:pb-[100px] flex flex-col items-center">
           <VerificationProgressTracker />
-          {isPartiallyShared ? renderMissingAndResetButton() : renderRequestCredentialsButton() }
+          {unverifiedClaims.length > 0 ? renderMissingAndResetButton() : renderRequestCredentialsButton() }
           {openSelection && <SelectionPanel />}
         </div>
         <div className="col-start-1 col-end-13 lg:col-start-7 xs:w-[100vw] lg:max-w-[50vw]">
           <VpVerification />
         </div>
       </div>
-    </PageTemplate>
   );
 }

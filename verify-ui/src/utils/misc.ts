@@ -1,9 +1,11 @@
 // match fot the occurrence of an uppercase letter
-import { VerificationMethod, VerificationStepsContentType } from "../types/data-types";
+import i18next from "i18next";
+import {VerificationMethod, VerificationStep, VerificationStepsContentType} from "../types/data-types";
 import {
-  InternetConnectivityCheckTimeout,
-  InternetConnectivityCheckEndpoint,
-  getVerificationStepsContent,
+    InternetConnectivityCheckTimeout,
+    InternetConnectivityCheckEndpoint,
+    getVerificationStepsContent,
+    VerificationStepWithStatus
 } from "./config";
 
 const splitCamelCaseRegex: RegExp = /([A-Z][a-z]+)/g;
@@ -15,13 +17,13 @@ export const convertToTitleCase = (text: string): string => {
     if (!text) return "";
     return text
         // Once match is found, split the words by adding space at the beginning of the natch and ensure the first letter is capital
-        .replace(splitCamelCaseRegex, (match) => ` ${match.charAt(0).toUpperCase()}${match.slice(1)}`)
+        .replaceAll(splitCamelCaseRegex, (match) => ` ${match.charAt(0).toUpperCase()}${match.slice(1)}`)
         // convert the first char of 'text' to capital case
         .replace(lowercaseStartRegex, (match) => match.toUpperCase());
 };
 
 export const getDisplayValue = (data: any): string => {
-    if (data instanceof Array && data?.length > 0) {
+    if (Array.isArray(data) && data?.length > 0) {
         let displayValue = "";
         data.forEach(value => {
             displayValue += `${value}, `;
@@ -30,26 +32,48 @@ export const getDisplayValue = (data: any): string => {
     }
     return data?.toString();
 }
+export const fetchVerificationSteps = (
+    method: VerificationMethod,
+    isPartiallyShared: boolean,
+    flowType?: "sameDevice" | "crossDevice",
+    activeScreen: number = 1
+): VerificationStepWithStatus[] => {
+    const verificationContent: VerificationStepsContentType = getVerificationStepsContent();
+    let selectedSteps: VerificationStep[] = [];
 
-export const fetchVerificationSteps = (method: VerificationMethod,isPartiallyShared:boolean) => {
-  let VerificationStepsContent: VerificationStepsContentType = getVerificationStepsContent();
-  if (method === "VERIFY") {
-    VerificationStepsContent = {
-            ...VerificationStepsContent,
-            [method]: VerificationStepsContent[method as VerificationMethod].filter(
-              (_, index: number) => {
-                if (isPartiallyShared && index === 1) {
-                  return false;
-                }
-                if (!isPartiallyShared && index === 2) {
-                  return false;
-                }
-                return true;
-              }
-            ),
-          };
-  }
-  return VerificationStepsContent[method];
+    if (method === "UPLOAD") {
+        selectedSteps = verificationContent.UPLOAD;
+    } else if (method === "SCAN") {
+        selectedSteps = verificationContent.SCAN;
+    } else if (method === "VERIFY") {
+        const verifySteps = verificationContent.VERIFY;
+        const stepMap = Object.fromEntries(verifySteps.map((step) => [step.label, step]));
+
+        selectedSteps.push(stepMap[i18next.t("VerificationStepsContent:VERIFY.InitiateVpRequest.label")]!);
+
+        if (isPartiallyShared) {
+            selectedSteps.push(stepMap[i18next.t("VerificationStepsContent:VERIFY.RequestMissingCredential.label")]!);
+        } else {
+            selectedSteps.push(stepMap[i18next.t("VerificationStepsContent:VERIFY.SelectCredential.label")]!);
+        }
+
+        if (flowType === "sameDevice") {
+            selectedSteps.push(stepMap[i18next.t("VerificationStepsContent:VERIFY.SelectWallet.label")]!);
+        } else {
+            selectedSteps.push(stepMap[i18next.t("VerificationStepsContent:VERIFY.ScanQrCode.label")]!);
+        }
+
+        selectedSteps.push(stepMap[i18next.t("VerificationStepsContent:VERIFY.DisplayResult.label")]!);
+    }
+
+    return selectedSteps
+        .filter(Boolean)
+        .map((step, index) => ({
+            ...step,
+            stepNumber: index + 1,
+            isCompleted: index + 1 < activeScreen,
+            isActive: index + 1 === activeScreen,
+        }));
 };
 
 export const getRangeOfNumbers = (length: number): number[] => {
@@ -89,16 +113,16 @@ export const checkInternetStatus = async (): Promise<boolean> => {
 export const convertToId = (content: string) => content.toLowerCase().replaceAll(" ", "-");
 
 export const saveData = async (vc: any) => {
-  const myData = vc;
-  const fileName = vc.type[1];
-  const json = JSON.stringify(myData, null, 2);
-  const blob = new Blob([json], { type: "application/json" });
-  const href = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = href;
-  link.download = fileName + ".json";
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(href);
+    const myData = vc;
+    const fileName = vc.type ? vc?.type[1] : "Inji_Verify_Credential_Data";
+    const json = JSON.stringify(myData, null, 2);
+    const blob = new Blob([json], { type: "application/json" });
+    const href = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = href;
+    link.download = fileName + ".json";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(href);
 };

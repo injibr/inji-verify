@@ -1,18 +1,19 @@
 package pages;
 
 import base.BasePage;
+
 import org.openqa.selenium.By;
+import org.openqa.selenium.StaleElementReferenceException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.FindBy;
+import java.time.Duration;
 import org.openqa.selenium.support.PageFactory;
 
 public class UploadQRCode extends BasePage {
 
-	private WebDriver driver;
-
 	public UploadQRCode(WebDriver driver) {
-		this.driver = driver;
+		super(driver);
 		PageFactory.initElements(driver, this);
 	}
 
@@ -24,6 +25,9 @@ public class UploadQRCode extends BasePage {
 
 	@FindBy(id = "vc-result-display-message")
 	WebElement ErrorTextExpiredQRCode;
+
+	@FindBy(id = "alert-message")
+	WebElement ErrorTextLargeSizeQRCode;
 
 	@FindBy(xpath = "//div[@class='grid content-center justify-center w-[100%] h-[320px] text-[#000000] opacity-10']")
 	WebElement BlankImageQRArea;
@@ -43,8 +47,23 @@ public class UploadQRCode extends BasePage {
 	@FindBy(xpath = "//p[@id='vc-result-display-message']")
 	WebElement Congratulationtext;
 
-	@FindBy(xpath = "//span[@id='verify-another-qr-code-button']")
+	@FindBy(xpath = "//span[text()='Verify Another QR code']")
 	WebElement VerifyAnotherQRcodeButton;
+
+	@FindBy(xpath = "//button[@data-testid='Language-Selector-Button']")
+	WebElement languageDropdownButton;
+
+	@FindBy(xpath = "//button[@type='button' and text()='عربي']")
+	WebElement arabicLanguageButton;
+
+	@FindBy(xpath = "//button[@type='button' and contains(normalize-space(.), 'Français')]")
+	WebElement frenchLanguageButton;
+
+	@FindBy(xpath = "//li[@data-testid='Language-Selector-DropDown-Item-ar']//button[contains(text(),'عربي')]")
+	WebElement arabicLanguageSelected;
+
+	@FindBy(xpath = "//button[@type='button' and contains(normalize-space(.), 'Français')]")
+	WebElement frenchLanguageSelected;
 
 	@FindBy(xpath = "//a[@id='home-button']")
 	WebElement HomeButton;
@@ -70,74 +89,115 @@ public class UploadQRCode extends BasePage {
 	@FindBy(id = "upload-qr-code-button")
 	WebElement UploadQRCodeButton;
 
-	public void ClickonUploadQRCodePng() {
+	@FindBy(id = "policyissuedon-value")
+	WebElement PolicyIssuedOnValue;
+
+	@FindBy(id = "policyexpireson-value")
+	WebElement PolicyExpiresOnValue;
+
+	@FindBy(id = "fullname-value")
+	WebElement fullNameValue;
+
+	public void clickOnUploadQRCodePng() {
 		uploadFile(driver, UploadQRCodeButton, "InsuranceCredential0.png");
 	}
-	
-	public void ClickonAnotherUploadQRCodePng() {
-		uploadFile(driver, VerifyAnotherQRcodeButton, "InsuranceCredential0.png");
+
+	public void clickOnAnotherUploadQRCodePng() {
+		uploadFile(driver, UploadQRCodeButton, "InsuranceCredential0.png");
 	}
 
-
-	public void ClickonUploadQRCodeJpg() {
+	public void clickOnUploadQRCodeJpg() {
 		uploadFile(driver, UploadQRCodeButton, "InsuranceCredential0.jpg");
 	}
-	
-	public void ClickonAnotherUploadQRCodeJpg() {
-		uploadFile(driver, VerifyAnotherQRcodeButton, "InsuranceCredential0.jpg");
+
+	public void clickOnAnotherUploadQRCodeJpg() {
+		uploadFile(driver, UploadQRCodeButton, "InsuranceCredential0.jpg");
 	}
 
-	public void ClickonUploadQRCodePdf() {
+	public void uploadMultiLanguageVc() {
+		uploadFileForStaticQr(driver, UploadQRCodeButton, "multilanguage.PNG");
+	}
+
+	public void clickOnUploadQRCodePdf() {
 		uploadFile(driver, UploadQRCodeButton, "InsuranceCredential.pdf");
 	}
-	
-	public void ClickonAnotherUploadQRCodePdf() {
-		uploadFile(driver, VerifyAnotherQRcodeButton, "InsuranceCredential.pdf");
+
+	public void clickOnAnotherUploadQRCodePdf() {
+		uploadFile(driver, UploadQRCodeButton, "InsuranceCredential.pdf");
 	}
 
-	public void ClickonUploadQRCodeJpeg() {
+	public void clickOnUploadQRCodeJpeg() {
 		uploadFile(driver, UploadQRCodeButton, "InsuranceCredential0.jpeg");
 	}
-	
-	public void ClickonAnotherUploadQRCodeJpeg() {
-		uploadFile(driver, VerifyAnotherQRcodeButton, "InsuranceCredential0.jpeg");
+
+	public void clickOnAnotherUploadQRCodeJpeg() {
+		uploadFile(driver, UploadQRCodeButton, "InsuranceCredential0.jpeg");
 	}
 
-
-	public void ClickonUploadQRCodeHtml() {
-		uploadFileForInvalid(driver, VerifyAnotherQRcodeButton, "QRCode_UnsupportedHtml.html");
+	public void clickOnUploadQRCodeHtml() {
+		uploadFileForStaticQr(driver, UploadQRCodeButton, "QRCode_UnsupportedHtml.html");
 	}
 
-	public void ClickonUploadQRCodeInvalid() {
-		uploadFileForInvalid(driver, UploadQRCodeButton, "Invalid.png");
+	public void clickOnUploadQRCodeInvalid() {
+		uploadFileForStaticQr(driver, UploadQRCodeButton, "Invalid.png");
 	}
 
-	public void ClickonUploadQRCodeDownloadedFromPhone() {
-		uploadFileForInvalid(driver, UploadQRCodeButton, "VcDownloadedFromMobileApp.png");
+	public void clickOnUploadQRCodeDownloadedFromPhone() {
+		uploadFileForStaticQr(driver, UploadQRCodeButton, "VcDownloadedFromMobileApp.jpg");
 	}
 
-	public void ClickonUploadExpiredQRCodepngExpired() {
-		uploadFileForInvalid(driver, VerifyAnotherQRcodeButton, "Expired_QRCode.png");
-
+	public void clickOnUploadExpiredQRCodepngExpired() {
+		driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(30));
+		uploadFileForStaticQr(driver, UploadQRCodeButton, "Expired_QRCode.png");
 	}
 
-	public void ClickonUploadExpiredQRCodeJpgExpired() {
-		uploadFileForInvalid(driver, UploadQRCodeButton, "Expired_QRCode.jpg");
-
-	}
-
-	public void ClickonUploadExpiredQRCodejpegExpired() {
-		uploadFileForInvalid(driver, UploadQRCodeButton, "Expired_QRCode.jpeg");
+	public void clickOnUploadLargeSizeQRCode() {
+		uploadFileForStaticQr(driver, UploadQRCodeButton, "largesize.PNG");
 
 	}
 
-	public void ClickonUploadExpiredQRCodepdfExpired() {
-		uploadFileForInvalid(driver, UploadQRCodeButton, "Expired_QRCode.pdf");
+	public void clickOnUploadBlurQRCode() {
+		uploadFileForStaticQr(driver, UploadQRCodeButton, "blur.PNG");
 
 	}
 
-	public void ClickonUploadQRCodeLageFileSize() {
-		uploadFileForInvalid(driver, UploadQRCodeButton, "LargeFileSize.png");
+	public void clickOnUploadMultipleQRCode() {
+		uploadFileForStaticQr(driver, UploadQRCodeButton, "multiple_image.jpg");
+
+	}
+
+	public void clickOnUploadSDJwtQRCode() {
+		uploadFileForStaticQr(driver, UploadQRCodeButton, "SD_Jwt_QRCode.PNG");
+
+	}
+
+	public void clickOnUploadSVGQRCode() {
+		uploadFileForStaticQr(driver, UploadQRCodeButton, "SVG.png");
+
+	}
+
+	public void clickOnUploadInvalidPdf() {
+		uploadFileForStaticQr(driver, UploadQRCodeButton, "invalid.pdf");
+
+	}
+
+	public void clickOnUploadExpiredQRCodeJpgExpired() {
+		uploadFileForStaticQr(driver, UploadQRCodeButton, "Expired_QRCode.jpg");
+
+	}
+
+	public void clickOnUploadExpiredQRCodeJpegExpired() {
+		uploadFileForStaticQr(driver, UploadQRCodeButton, "Expired_QRCode.jpeg");
+
+	}
+
+	public void clickOnUploadExpiredQRCodePdfExpired() {
+		uploadFileForStaticQr(driver, UploadQRCodeButton, "Expired_QRCode.pdf");
+
+	}
+
+	public void clickOnUploadQRCodeLargeFileSize() {
+		uploadFileForStaticQr(driver, UploadQRCodeButton, "LargeFileSize.png");
 
 	}
 
@@ -163,8 +223,8 @@ public class UploadQRCode extends BasePage {
 
 	public boolean isVisibleUploadQRCodeStep2LabelAfter() {
 		return isElementIsVisible(driver, UploadQRCodeStep2LabelAfter);
-
 	}
+	
 
 	public boolean isVisibleUploadQRCodeStep3LabelAfter() {
 		return isElementIsVisible(driver, UploadQRCodeStep3LabelAfter);
@@ -185,21 +245,42 @@ public class UploadQRCode extends BasePage {
 		return getText(driver, Congratulationtext);
 	}
 
-	public boolean isVisibleVerifyAnotherQRcodeButton() {
+	public boolean isVisibleVerifyAnotherQRCodeButton() {
 		return isElementIsVisible(driver, VerifyAnotherQRcodeButton);
 
 	}
 
-	public void clickOnAnotherQRcodeButton() {
+	public boolean isVisiblePolicyIssuedOnValue() {
+		return isElementIsVisible(driver, PolicyIssuedOnValue);
+
+	}
+
+	public boolean isVisiblePolicyExpiresOnValue() {
+		return isElementIsVisible(driver, PolicyExpiresOnValue);
+
+	}
+
+	public boolean isVisibleFullNameValue() {
+		return isElementIsVisible(driver, fullNameValue);
+
+	}
+	
+
+	public void clickOnAnotherQRCodeButton() {
 		clickOnElement(driver, VerifyAnotherQRcodeButton);
 
 	}
 
-	public void ClickonHomeButton() {
+	public void clickOnLanguageDropdown() {
+		clickOnElement(driver, languageDropdownButton);
+
+	}
+
+	public void clickOnHomeButton() {
 		clickOnElement(driver, HomeButton);
 	}
 
-	public void clickVerifyCredentialsbutton() {
+	public void clickVerifyCredentialsButton() {
 		clickOnElement(driver, Credentialsbutton);
 	}
 
@@ -221,6 +302,16 @@ public class UploadQRCode extends BasePage {
 		return getText(driver, ErrorTextExpiredQRCode);
 	}
 
+	public String getErrorMessageForLargeSizeQRCode() {
+
+		return getText(driver, ErrorTextLargeSizeQRCode);
+	}
+
+	public String getErrorMessageForBlurQRCode() {
+
+		return getText(driver, ErrorTextLargeSizeQRCode);
+	}
+
 	public void browserBackButtonAfterVerification() {
 		browserBackButton(driver);
 	}
@@ -229,5 +320,24 @@ public class UploadQRCode extends BasePage {
 		clickOnElement(driver, PleaseTryAgain);
 	}
 
+	public boolean isLanguageDropdownVisible() {
+		return isElementIsVisible(driver, languageDropdownButton);
+	}
+
+	public boolean isArabicLanguageSelected() {
+		return isElementIsVisible(driver, arabicLanguageSelected);
+	}
+
+	public boolean isFrenchLanguageSelected() {
+		return isElementIsVisible(driver, frenchLanguageSelected);
+	}
+
+	public void selectArabicLanguage() {
+		clickOnElement(driver, arabicLanguageButton);
+	}
+
+	public void selectFrenchLanguage() {
+		clickOnElement(driver, frenchLanguageButton);
+	}
 
 }

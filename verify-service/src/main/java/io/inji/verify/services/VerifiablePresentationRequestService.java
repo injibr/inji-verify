@@ -4,6 +4,7 @@ import io.inji.verify.dto.authorizationrequest.VPRequestCreateDto;
 import io.inji.verify.dto.authorizationrequest.VPRequestResponseDto;
 import io.inji.verify.dto.authorizationrequest.VPRequestStatusDto;
 import io.inji.verify.exception.PresentationDefinitionNotFoundException;
+import io.inji.verify.exception.VPRequestNotFoundException;
 import io.inji.verify.models.AuthorizationRequestCreateResponse;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.web.context.request.async.DeferredResult;
@@ -22,4 +23,6 @@ public interface VerifiablePresentationRequestService {
     void invokeVpRequestStatusListener(@NotNull String state);
 
     DeferredResult<VPRequestStatusDto> getStatus(@NotNull String requestId);
+
+    String getVPRequestJwt(String requestId) throws VPRequestNotFoundException;
 }
