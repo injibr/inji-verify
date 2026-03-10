@@ -126,20 +126,17 @@ public class VerifiablePresentationRequestServiceImpl implements VerifiablePrese
                     DeferredResult<VPRequestStatusDto> result = new DeferredResult<>(timeOut);
                     VPRequestStatusDto currentRequestStatus = getCurrentRequestStatus(requestId);
 
-                    if (currentRequestStatus.getStatus() == VPRequestStatus.EXPIRED) {
-                        result.setResult(new VPRequestStatusDto(VPRequestStatus.EXPIRED));
-                        return result;
-                    }
+                    if (currentRequestStatus.getStatus() == VPRequestStatus.EXPIRED ||
+                        currentRequestStatus.getStatus() == VPRequestStatus.VP_SUBMITTED) {
 
-                    if (currentRequestStatus.getStatus() == VPRequestStatus.VP_SUBMITTED) {
-                        result.setResult(new VPRequestStatusDto(VPRequestStatus.VP_SUBMITTED));
+                        result.setResult(currentRequestStatus);
                         return result;
                     }
 
                     result.onTimeout(() -> {
                         result.setResult(getCurrentRequestStatus(requestId));
-                        vpRequestStatusListeners.remove(requestId);
                     });
+
                     result.onCompletion(() -> vpRequestStatusListeners.remove(requestId));
                     registerVpRequestStatusListener(requestId, result);
                     return result;
