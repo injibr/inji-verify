@@ -131,7 +131,16 @@ public class VerifiablePresentationRequestServiceImpl implements VerifiablePrese
                         return result;
                     }
 
-                    result.onTimeout(() -> result.setResult(getCurrentRequestStatus(requestId)));
+                    if (currentRequestStatus.getStatus() == VPRequestStatus.VP_SUBMITTED) {
+                        result.setResult(new VPRequestStatusDto(VPRequestStatus.VP_SUBMITTED));
+                        return result;
+                    }
+
+                    result.onTimeout(() -> {
+                        result.setResult(getCurrentRequestStatus(requestId));
+                        vpRequestStatusListeners.remove(requestId);
+                    });
+                    result.onCompletion(() -> vpRequestStatusListeners.remove(requestId));
                     registerVpRequestStatusListener(requestId, result);
                     return result;
                 })
