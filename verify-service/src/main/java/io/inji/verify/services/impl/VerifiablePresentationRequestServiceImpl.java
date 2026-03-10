@@ -26,9 +26,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.context.request.async.DeferredResult;
 
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.beans.factory.annotation.Value;
 
@@ -45,7 +45,7 @@ public class VerifiablePresentationRequestServiceImpl implements VerifiablePrese
     @Value("${inji.vp-request.long-polling-timeout}")
     Long defaultTimeout;
 
-    ConcurrentHashMap<String, DeferredResult<VPRequestStatusDto>> vpRequestStatusListeners = new ConcurrentHashMap<>();
+    HashMap<String, DeferredResult<VPRequestStatusDto>> vpRequestStatusListeners = new HashMap<>();
 
     @Override
     public VPRequestResponseDto createAuthorizationRequest(VPRequestCreateDto vpRequestCreate) throws PresentationDefinitionNotFoundException {
@@ -126,18 +126,12 @@ public class VerifiablePresentationRequestServiceImpl implements VerifiablePrese
                     DeferredResult<VPRequestStatusDto> result = new DeferredResult<>(timeOut);
                     VPRequestStatusDto currentRequestStatus = getCurrentRequestStatus(requestId);
 
-                    if (currentRequestStatus.getStatus() == VPRequestStatus.EXPIRED ||
-                        currentRequestStatus.getStatus() == VPRequestStatus.VP_SUBMITTED) {
-
-                        result.setResult(currentRequestStatus);
+                    if (currentRequestStatus.getStatus() == VPRequestStatus.EXPIRED) {
+                        result.setResult(new VPRequestStatusDto(VPRequestStatus.EXPIRED));
                         return result;
                     }
 
-                    result.onTimeout(() -> {
-                        result.setResult(getCurrentRequestStatus(requestId));
-                    });
-
-                    result.onCompletion(() -> vpRequestStatusListeners.remove(requestId));
+                    result.onTimeout(() -> result.setResult(getCurrentRequestStatus(requestId)));
                     registerVpRequestStatusListener(requestId, result);
                     return result;
                 })
