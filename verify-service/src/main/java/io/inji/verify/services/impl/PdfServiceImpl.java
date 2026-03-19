@@ -55,6 +55,8 @@ public class PdfServiceImpl implements PdfService {
                 htmlGeneratorType = "CarReceiptAstHtmlGeneratorServiceImpl";
             } else if (credentialType.equals("CAFCredential")) {
                 htmlGeneratorType = "CAFCredentialHtmlGeneratorServiceImpl";
+            } else if (credentialType.equals("CCIRCredential")) {
+                htmlGeneratorType = "CCIRCredentialHtmlGeneratorServiceImpl";
             }else if (credentialType.equals("CARDocument")) {
                 htmlGeneratorType = "CARDocumentHtmlGeneratorServiceImpl";
             }  else if (!Objects.isNull(data.get("tipoImovel")) && data.get("tipoImovel").equals("PCT")){
