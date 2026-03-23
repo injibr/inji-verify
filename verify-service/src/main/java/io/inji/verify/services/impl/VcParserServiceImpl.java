@@ -6,7 +6,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.inji.verify.services.VcParserService;
-import org.apache.commons.lang.StringEscapeUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -119,10 +118,8 @@ public class VcParserServiceImpl implements VcParserService {
         }
 
         // Get the first element from "verifiableCredential" array
-        String vcEscaped = rootNode.get("verifiableCredential").get(vcNumber).asText();
-        // Unescape the string to get valid JSON
-        String vcJson = StringEscapeUtils.unescapeJava(vcEscaped);
-        // Parse the inner JSON
+        String vcJson = rootNode.get("verifiableCredential").get(vcNumber).asText();
+        // Parse the inner JSON (Jackson already unescapes the string value)
        return mapper.readTree(vcJson);
 
     }
