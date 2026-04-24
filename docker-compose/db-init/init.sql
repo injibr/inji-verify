@@ -28,3 +28,25 @@ CREATE TABLE IF NOT EXISTS verify.vp_submission(
     error character varying(100) NULL,
     error_description character varying(200) NULL
 );
+
+CREATE TABLE verify.bank_credentials (
+    bank_id VARCHAR(100) NOT NULL,
+    bank_name VARCHAR(255) NOT NULL,
+    api_key VARCHAR(255) NOT NULL,
+    bank_secret VARCHAR(255) NOT NULL,
+    bank_webhook_url VARCHAR(500),
+    bank_webhook_uri VARCHAR(500),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NULL,
+    CONSTRAINT bank_credentials_pkey PRIMARY KEY (bank_id)
+);
+
+CREATE TABLE verify.vp_requests (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    request_id VARCHAR(255) NOT NULL,
+    transaction_id VARCHAR(255) NOT NULL,
+    bank_credential_id VARCHAR(100) NOT NULL,
+    CONSTRAINT fk_bank_credential
+        FOREIGN KEY (bank_credential_id)
+        REFERENCES verify.bank_credentials (bank_id)
+        ON DELETE CASCADE
+);

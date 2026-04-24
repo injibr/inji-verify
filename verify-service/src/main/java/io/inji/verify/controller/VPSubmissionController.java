@@ -51,6 +51,10 @@ public class VPSubmissionController {
             @NotNull @NotBlank @RequestParam(value = "state") String state,
             @RequestParam(value = "error", required = false) String error,
             @RequestParam(value = "error_description", required = false) String errorDescription) {
+        // INJIBR-CUSTOM: log VP submission parameters for debugging
+        log.info("vp_token: {}", vpToken);
+        log.info("presentation_submission: {}", presentationSubmission);
+        log.info("state: {}", state);
         // --- 1. Initial response validation ---
         if (!isValidResponse(vpToken, error, presentationSubmission)) {
             String invalidResponseMessage = "Invalid response: either vp_token and presentation_submission must be provided, or error must be provided.";

@@ -7,14 +7,20 @@
     <parent>
         <groupId>io.inji.verify</groupId>
         <artifactId>verify-service-parent</artifactId>
-        <version>0.17.0</version>
+        <version>4.1.2</version>
     </parent>
 
     <artifactId>verify-service</artifactId>
-    <version>0.17.0</version>
+    <version>4.1.2</version>
     <name>verify-service</name>
     <description>Inji verify backend server implementing the OpenId4VP flow and online verification of VC</description>
     <packaging>jar</packaging>
+    <!-- INJIBR-CUSTOM: iText versions for PDF generation -->
+    <properties>
+        <itextcore.version>8.0.3</itextcore.version>
+        <itexthtml2pdf.version>5.0.3</itexthtml2pdf.version>
+        <itext.version>5.5.13</itext.version>
+    </properties>
     <dependencies>
         <dependency>
             <groupId>com.android.identity</groupId>
@@ -138,6 +144,53 @@
             <artifactId>tink</artifactId>
             <version>${tink.version}</version>
         </dependency>
+        <!-- INJIBR-CUSTOM: HTTP client for bank webhook calls -->
+        <dependency>
+            <groupId>org.apache.httpcomponents.client5</groupId>
+            <artifactId>httpclient5</artifactId>
+        </dependency>
+        <!-- INJIBR-CUSTOM: WebClient reactive for bank webhook -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-webflux</artifactId>
+        </dependency>
+        <!-- INJIBR-CUSTOM: Velocity template engine for HTML generation -->
+        <dependency>
+            <groupId>org.apache.velocity</groupId>
+            <artifactId>velocity</artifactId>
+            <version>1.7</version>
+        </dependency>
+        <!-- INJIBR-CUSTOM: iText PDF generation -->
+        <dependency>
+            <groupId>com.itextpdf</groupId>
+            <artifactId>itext7-core</artifactId>
+            <version>${itextcore.version}</version>
+            <type>pom</type>
+        </dependency>
+        <dependency>
+            <groupId>com.itextpdf</groupId>
+            <artifactId>html2pdf</artifactId>
+            <version>${itexthtml2pdf.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.itextpdf</groupId>
+            <artifactId>itextpdf</artifactId>
+            <version>${itext.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.itextpdf.tool</groupId>
+            <artifactId>xmlworker</artifactId>
+            <version>${itext.version}</version>
+        </dependency>
+        <!-- INJIBR-CUSTOM: Reactor Netty for WebClient SSL support -->
+        <dependency>
+            <groupId>io.projectreactor.netty</groupId>
+            <artifactId>reactor-netty-http</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-handler</artifactId>
+        </dependency>
     </dependencies>
     <build>
         <plugins>
@@ -156,6 +209,27 @@
                             <goal>build-info</goal>
                             <goal>repackage</goal>
                         </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- INJIBR-CUSTOM: skip sources and javadoc JARs to avoid wildcard conflict in Dockerfile -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <phase>none</phase>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <phase>none</phase>
                     </execution>
                 </executions>
             </plugin>
