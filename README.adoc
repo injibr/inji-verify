@@ -4,21 +4,14 @@
 [cols="^1,^1,<1"]
 |===
 | Branch | Versão | Status
-| https://scm.prevnet/inji/inji-verify/tree/desenvolvimento[desenvolvimento]
-| 1.0.0
-| image:https://www-ci.prevnet/job/MGI/job/code_inji-verify/job/desenvolvimento/badge/icon[Build Status, link=https://www-ci.prevnet/job/MGI/job/code_inji-verify/job/desenvolvimento/]
+| INJI CORE
+| v0.17.0
+| 
 
 | https://scm.prevnet/inji/inji-verify/tree/entrega[entrega]
-| 1.0.0
+| v5.0.0
 | image:https://www-ci.prevnet/job/MGI/job/code_inji-verify/job/entrega/badge/icon[Build Status, link=https://www-ci.prevnet/job/MGI/job/code_inji-verify/job/entrega/]
 
-| https://scm.prevnet/inji/inji-verify/tree/incidente[incidente]
-| 1.0.0
-| image:https://www-ci.prevnet/job/MGI/job/code_inji-verify/job/incidente/badge/icon[Build Status, link=https://www-ci.prevnet/job/MGI/job/code_inji-verify/job/incidente/]
-
-| https://scm.prevnet/inji/inji-verify/tree/master[master]
-| 1.0.0
-| image:https://www-ci.prevnet/job/MGI/job/code_inji-verify/job/master/badge/icon[Build Status, link=https://www-ci.prevnet/job/MGI/job/code_inji-verify/job/master/]
 |===
 
 == Documentação de apoio
