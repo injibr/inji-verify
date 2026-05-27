@@ -70,8 +70,8 @@ public class CARDocumentHtmlGeneratorServiceImpl implements HtmlGeneratorService
                         html.append("        <td style=\"padding: 6px;\">").append(entry.get("fase")).append("</td>\n");
                         html.append("        <td style=\"padding: 6px;\">").append(entry.get("descricao")).append("</td>\n");
                         html.append("        <td style=\"padding: 6px;\">").append(entry.get("processamento")).append("</td>\n");
-                        html.append("        <td style=\"padding: 6px;\">").append(entry.get("areaSobreposicao")).append("</td>\n");
-                        html.append("        <td style=\"padding: 6px;\">").append(entry.get("percentualSobreposicao")).append("</td>\n");
+                        html.append("        <td style=\"padding: 6px; text-align: center;\">").append(entry.get("areaSobreposicao")).append("</td>\n");
+                        html.append("        <td style=\"padding: 6px; text-align: center;\">").append(entry.get("percentualSobreposicao")).append("</td>\n");
                         html.append("    </tr>\n");
                         html.append("    </tbody>\n");
                     }
