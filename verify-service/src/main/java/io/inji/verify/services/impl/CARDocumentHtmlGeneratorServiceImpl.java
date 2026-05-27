@@ -78,7 +78,8 @@ public class CARDocumentHtmlGeneratorServiceImpl implements HtmlGeneratorService
                     mergedHtml = mergedHtml.replace("REPLACEME-->" + key, html.toString());
 
                 } else{
-                    mergedHtml = mergedHtml.replace("REPLACEME-->" + key, data.get(key) != null ? data.get(key) : "");
+                    String value = data.get(key);
+                    mergedHtml = mergedHtml.replace("REPLACEME-->" + key, (value != null && !value.equals("null")) ? value : "-");
                 }
             } catch (IllegalArgumentException ex) {
                 log.error("Error while replacing key in template {}", key);
