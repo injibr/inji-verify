@@ -5,7 +5,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Matcher;
@@ -22,7 +24,10 @@ public class CARDocumentHtmlGeneratorServiceImpl implements HtmlGeneratorService
                 "sobreposicoesTerraIndigena"
         };
         String mergedHtml = getCredentialSupportedTemplateString(issuerId, credentialType);
-        for (String key : data.keySet()) {
+        List<String> sortedKeys = data.keySet().stream()
+                .sorted(Comparator.comparingInt(String::length).reversed())
+                .toList();
+        for (String key : sortedKeys) {
             try {
                 if (key.equals("sobreposicoesAreasEmbargadas") || key.equals("sobreposicoesUnidadeConservacao") || key.equals("sobreposicoesTerraIndigena")) {
                     String input = data.get(key);
@@ -70,20 +75,19 @@ public class CARDocumentHtmlGeneratorServiceImpl implements HtmlGeneratorService
                         html.append("    </tr>\n");
                         html.append("    </tbody>\n");
                     }
-                    mergedHtml = mergedHtml.replaceAll("REPLACEME-->" + key, html.toString());
+                    mergedHtml = mergedHtml.replace("REPLACEME-->" + key, html.toString());
 
                 } else{
-                    mergedHtml = mergedHtml.replaceAll("REPLACEME-->" + key, data.get(key));
+                    mergedHtml = mergedHtml.replace("REPLACEME-->" + key, data.get(key) != null ? data.get(key) : "");
                 }
             } catch (IllegalArgumentException ex) {
                 log.error("Error while replacing key in template {}", key);
-                // If there's an error (e.g., special characters in the value), remove the placeholder
-                mergedHtml = mergedHtml.replaceAll("REPLACEME-->" + key, "");
+                mergedHtml = mergedHtml.replace("REPLACEME-->" + key, "");
             }
         }
         for (String mk : multiKeys) {
             if (!data.containsKey(mk)) {
-                mergedHtml = mergedHtml.replaceAll("REPLACEME-->" + mk, "");
+                mergedHtml = mergedHtml.replace("REPLACEME-->" + mk, "");
             }
         }
         return mergedHtml;

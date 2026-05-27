@@ -8,6 +8,9 @@ import io.inji.verify.services.VcParserService;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -45,5 +48,10 @@ class CARReceiptAstPdfGenerationTest {
         HtmlConverter.convertToPdf(html, new PdfWriter(pdfOutput), props);
 
         assertTrue(pdfOutput.size() > 0);
+
+        Path outputPath = Path.of(System.getProperty("user.dir"), "MGI-CARReceiptAST.pdf");
+        Files.write(outputPath, pdfOutput.toByteArray());
+        assertTrue(new File(outputPath.toString()).exists());
+        System.out.println("PDF gerado: " + outputPath);
     }
 }
