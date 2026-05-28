@@ -60,10 +60,10 @@ public class PdfServiceImpl implements PdfService {
             }else if (credentialType.equals("CARDocument")) {
                 htmlGeneratorType = "CARDocumentHtmlGeneratorServiceImpl";
             }  else if (!Objects.isNull(data.get("tipoImovel")) && data.get("tipoImovel").equals("PCT")){
-                htmlGeneratorType = "defaultHtmlGeneratorService";
+                htmlGeneratorType = "CARReceiptHtmlGeneratorServiceImpl";
                 credentialType = "CARReceiptPCT";
             }else {
-                htmlGeneratorType = "defaultHtmlGeneratorService";
+                htmlGeneratorType = "CARReceiptHtmlGeneratorServiceImpl";
             }
 
             String html = htmlGeneratorFactory.getHtmlGeneratorService(htmlGeneratorType)
