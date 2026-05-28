@@ -154,20 +154,30 @@ public class CARReceiptHtmlGeneratorServiceImpl implements HtmlGeneratorService 
             double centerLon = (minLon + maxLon) / 2;
             double centerLat = (minLat + maxLat) / 2;
 
+            int imgSize = 512;
+            int imgHeight = 250;
+            int tileSize = 256;
+
+            // Calculate zoom to fit polygon in image with margin
             double latDiff = maxLat - minLat;
             double lonDiff = maxLon - minLon;
             double maxDiff = Math.max(latDiff, lonDiff);
 
-            int zoom;
-            if (maxDiff > 10) zoom = 5;
-            else if (maxDiff > 1) zoom = 8;
-            else if (maxDiff > 0.1) zoom = 12;
-            else if (maxDiff > 0.01) zoom = 16;
-            else zoom = 17;
-
-            int imgSize = 512;
-            int imgHeight = 250;
-            int tileSize = 256;
+            // Calculate zoom so polygon fills ~60% of the image
+            int zoom = 1;
+            for (int z = 18; z >= 1; z--) {
+                double n = 1 << z;
+                double pixelSpanLon = (lonDiff / 360.0) * n * tileSize;
+                double latRadMin = Math.toRadians(minLat);
+                double latRadMax = Math.toRadians(maxLat);
+                double yMin = (1 - Math.log(Math.tan(latRadMax) + 1 / Math.cos(latRadMax)) / Math.PI) / 2 * n * tileSize;
+                double yMax = (1 - Math.log(Math.tan(latRadMin) + 1 / Math.cos(latRadMin)) / Math.PI) / 2 * n * tileSize;
+                double pixelSpanLat = Math.abs(yMax - yMin);
+                if (pixelSpanLon < imgSize * 0.6 && pixelSpanLat < imgHeight * 0.6) {
+                    zoom = z;
+                    break;
+                }
+            }
             double n = 1 << zoom;
 
             // Center tile pixel coordinates (global)

@@ -52,7 +52,7 @@ public class PdfServiceImpl implements PdfService {
             String htmlGeneratorType;
             if (!Objects.isNull(data.get("tipoImovel")) && data.get("tipoImovel").equals("AST")){
                 credentialType = "CARReceiptAST";
-                htmlGeneratorType = "CarReceiptAstHtmlGeneratorServiceImpl";
+                htmlGeneratorType = "CARReceiptHtmlGeneratorServiceImpl";
             } else if (credentialType.equals("CAFCredential")) {
                 htmlGeneratorType = "CAFCredentialHtmlGeneratorServiceImpl";
             } else if (credentialType.equals("CCIRCredential")) {

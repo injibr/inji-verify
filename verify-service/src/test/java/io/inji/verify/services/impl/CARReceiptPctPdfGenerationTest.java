@@ -15,15 +15,15 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class CARReceiptAstPdfGenerationTest {
+class CARReceiptPctPdfGenerationTest {
 
     private final VcParserService vcParserService = new VcParserServiceImpl();
     private final CARReceiptHtmlGeneratorServiceImpl htmlGenerator = new CARReceiptHtmlGeneratorServiceImpl();
 
     @Test
-    void shouldParseAndGeneratePdfWithProprietarios() throws Exception {
+    void shouldParseAndGeneratePdfForCARReceiptPCT() throws Exception {
         String vc = new String(
-                getClass().getClassLoader().getResourceAsStream("car-receipt-ast-credential-sample.json").readAllBytes()
+                getClass().getClassLoader().getResourceAsStream("car-receipt-pct-credential-sample.json").readAllBytes()
         );
 
         Map<String, String> credentialMap = vcParserService.extractCredentialSubject(vc, 0);
@@ -33,13 +33,12 @@ class CARReceiptAstPdfGenerationTest {
         assertEquals("MGI", issuerId);
         assertEquals("CARReceipt", credentialType);
         assertTrue(credentialMap.containsKey("proprietarios"));
-        assertTrue(credentialMap.get("proprietarios").contains("Joao da Silva"));
 
-        String html = htmlGenerator.replaceAndGetHtml(credentialMap, issuerId, "CARReceiptAST");
+        String html = htmlGenerator.replaceAndGetHtml(credentialMap, issuerId, "CARReceiptPCT");
 
-        assertTrue(html.contains("Joao da Silva"));
-        assertTrue(html.contains("Maria Oliveira"));
-        assertTrue(html.contains("123.456.789-01"));
+        assertTrue(html.contains("TERRITÓRIO QUILOMBOLA PALMARES"));
+        assertTrue(html.contains("ASSOCIACAO QUILOMBOLA PALMARES"));
+        assertTrue(html.contains("Salvador"));
 
         ByteArrayOutputStream pdfOutput = new ByteArrayOutputStream();
         ConverterProperties props = new ConverterProperties();
@@ -48,7 +47,7 @@ class CARReceiptAstPdfGenerationTest {
 
         assertTrue(pdfOutput.size() > 0);
 
-        Path outputPath = Path.of(System.getProperty("user.dir"), "MGI-CARReceiptAST.pdf");
+        Path outputPath = Path.of(System.getProperty("user.dir"), "MGI-CARReceiptPCT.pdf");
         Files.write(outputPath, pdfOutput.toByteArray());
         assertTrue(new File(outputPath.toString()).exists());
         System.out.println("PDF gerado: " + outputPath);
