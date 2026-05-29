@@ -34,14 +34,14 @@ class CAFCredentialPdfGenerationTest {
         assertEquals("CAFCredential", credentialType);
         assertTrue(credentialMap.containsKey("membros"));
         assertTrue(credentialMap.containsKey("areas"));
-        assertTrue(credentialMap.get("membros").contains("Jose da Silva"));
+        assertTrue(credentialMap.get("membros").contains("JURANDY DA SILVA LOPES JUNIOR"));
 
         String html = htmlGenerator.replaceAndGetHtml(credentialMap, issuerId, credentialType);
 
         assertFalse(html.contains("REPLACEME-->membros"));
-        assertTrue(html.contains("Jose da Silva"));
-        assertTrue(html.contains("Ana da Silva"));
-        assertTrue(html.contains("11122233344"));
+        assertTrue(html.contains("JURANDY DA SILVA LOPES JUNIOR"));
+        assertTrue(html.contains("BEATRIZ COELHO DAS NEVES"));
+        assertTrue(html.contains("040.***.**"));
 
         ByteArrayOutputStream pdfOutput = new ByteArrayOutputStream();
         ConverterProperties props = new ConverterProperties();
