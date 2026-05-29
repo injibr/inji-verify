@@ -10,12 +10,37 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Slf4j
 @Service("CARDocumentHtmlGeneratorServiceImpl")
 public class CARDocumentHtmlGeneratorServiceImpl implements HtmlGeneratorService {
+
+    private static final Set<String> COORD_FIELDS = Set.of("coordenadaImovelX", "coordenadaImovelY");
+
+    private String formatCoordinate(String value, String key) {
+        try {
+            double decimal = Double.parseDouble(value);
+            String direction;
+            if (key.equals("coordenadaImovelY")) {
+                direction = decimal >= 0 ? "N" : "S";
+            } else {
+                direction = decimal >= 0 ? "L" : "O";
+            }
+            decimal = Math.abs(decimal);
+            int degrees = (int) decimal;
+            double minutesDecimal = (decimal - degrees) * 60;
+            int minutes = (int) minutesDecimal;
+            double seconds = (minutesDecimal - minutes) * 60;
+            return String.format("%d°%02d'%05.2f'' %s", degrees, minutes, seconds, direction)
+                    .replace('.', ',');
+        } catch (NumberFormatException e) {
+            return value;
+        }
+    }
+
     @Override
     public String replaceAndGetHtml(Map<String, String> data, String issuerId, String credentialType) {
         String[] multiKeys = {
@@ -77,6 +102,8 @@ public class CARDocumentHtmlGeneratorServiceImpl implements HtmlGeneratorService
                     }
                     mergedHtml = mergedHtml.replace("REPLACEME-->" + key, html.toString());
 
+                } else if (COORD_FIELDS.contains(key)) {
+                    mergedHtml = mergedHtml.replace("REPLACEME-->" + key, formatCoordinate(data.get(key), key));
                 } else{
                     String value = data.get(key);
                     mergedHtml = mergedHtml.replace("REPLACEME-->" + key, (value != null && !value.equals("null")) ? value : "-");
