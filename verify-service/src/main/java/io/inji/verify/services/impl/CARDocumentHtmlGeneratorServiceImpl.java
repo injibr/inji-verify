@@ -19,6 +19,13 @@ import java.util.regex.Pattern;
 public class CARDocumentHtmlGeneratorServiceImpl implements HtmlGeneratorService {
 
     private static final Set<String> COORD_FIELDS = Set.of("coordenadaImovelX", "coordenadaImovelY");
+    private static final Set<String> DECIMAL_FIELDS = Set.of("areaTotalImovel", "quantidadeModulosFiscais",
+            "areaRemanescenteVegetacaoNativa", "areaConsolidada", "areaServidaoAdministrativa",
+            "areaReservaLegalAverbada", "areaReservaLegalAprovadaNaoAverbada", "areaReservaLegalProposta",
+            "areaReservaLegalDeclaradaProprietarioPossuidor", "areaPreservacaoPermanente",
+            "areaPreservacaoPermanenteAreaRuralConsolidada", "areaPreservacaoPermanenteAreaRemanescenteVegetacaoNativa",
+            "areaUsoRestrito", "areaUsoRestritoDeclividade", "areaReservaLegalExcedentePassivo",
+            "areaReservaLegalRecompor", "areaPreservacaoPermanenteRecompor", "areaUsoRestritoRecompor");
 
     private String formatCoordinate(String value, String key) {
         try {
@@ -104,6 +111,18 @@ public class CARDocumentHtmlGeneratorServiceImpl implements HtmlGeneratorService
 
                 } else if (COORD_FIELDS.contains(key)) {
                     mergedHtml = mergedHtml.replace("REPLACEME-->" + key, formatCoordinate(data.get(key), key));
+                } else if (DECIMAL_FIELDS.contains(key)) {
+                    String value = data.get(key);
+                    if (value != null && !value.equals("null")) {
+                        try {
+                            double d = Double.parseDouble(value);
+                            mergedHtml = mergedHtml.replace("REPLACEME-->" + key, String.format("%.2f", d).replace('.', ','));
+                        } catch (NumberFormatException e) {
+                            mergedHtml = mergedHtml.replace("REPLACEME-->" + key, value.replace('.', ','));
+                        }
+                    } else {
+                        mergedHtml = mergedHtml.replace("REPLACEME-->" + key, "-");
+                    }
                 } else{
                     String value = data.get(key);
                     mergedHtml = mergedHtml.replace("REPLACEME-->" + key, (value != null && !value.equals("null")) ? value : "-");
@@ -118,6 +137,8 @@ public class CARDocumentHtmlGeneratorServiceImpl implements HtmlGeneratorService
                 mergedHtml = mergedHtml.replace("REPLACEME-->" + mk, "");
             }
         }
+        mergedHtml = mergedHtml.replace("REPLACEME-->dataGeracao",
+                java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")));
         return mergedHtml;
     }
 }
