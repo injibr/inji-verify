@@ -38,7 +38,10 @@ public class CARReceiptHtmlGeneratorServiceImpl implements HtmlGeneratorService 
     private String formatDecimal(String value) {
         try {
             double d = Double.parseDouble(value);
-            return String.format("%.4f", d);
+            java.text.NumberFormat nf = java.text.NumberFormat.getNumberInstance(new java.util.Locale("pt", "BR"));
+            nf.setMinimumFractionDigits(2);
+            nf.setMaximumFractionDigits(4);
+            return nf.format(d);
         } catch (NumberFormatException e) {
             return value;
         }
@@ -110,6 +113,14 @@ public class CARReceiptHtmlGeneratorServiceImpl implements HtmlGeneratorService 
             mergedHtml = mergedHtml.replace("REPLACEME-->qrCodeFooter", "");
         }
 
+        // Dynamic page numbering
+        int totalPages = mergedHtml.split("class=\"page\"").length - 1;
+        int pageNum = 1;
+        while (mergedHtml.contains("REPLACEME-->paginaInfo")) {
+            mergedHtml = mergedHtml.replaceFirst("REPLACEME-->paginaInfo", pageNum + "/" + totalPages);
+            pageNum++;
+        }
+
         return mergedHtml;
     }
 
@@ -131,10 +142,11 @@ public class CARReceiptHtmlGeneratorServiceImpl implements HtmlGeneratorService 
 
         StringBuilder html = new StringBuilder();
         for (HashMap<String, String> entry : resultList) {
-            String cpf = formatCpf(Objects.toString(entry.get("cpfCnpj"), "-"));
+            String doc = formatCpf(Objects.toString(entry.get("cpfCnpj"), "-"));
             String nome = Objects.toString(entry.get("nome"), "-");
+            String docLabel = Objects.toString(entry.get("cpfCnpj"), "").replaceAll("\\D", "").length() == 14 ? "CNPJ" : "CPF";
             html.append("    <tr>\n");
-            html.append("        <td colspan=\"3\">CPF: ").append(cpf).append("</td>\n");
+            html.append("        <td colspan=\"3\">").append(docLabel).append(": ").append(doc).append("</td>\n");
             html.append("        <td colspan=\"3\">Nome: ").append(nome).append("</td>\n");
             html.append("    </tr>\n");
         }
@@ -145,6 +157,8 @@ public class CARReceiptHtmlGeneratorServiceImpl implements HtmlGeneratorService 
         String d = value.replaceAll("\\D", "");
         if (d.length() == 11) {
             return d.substring(0, 3) + "." + d.substring(3, 6) + "." + d.substring(6, 9) + "-" + d.substring(9);
+        } else if (d.length() == 14) {
+            return d.substring(0, 2) + "." + d.substring(2, 5) + "." + d.substring(5, 8) + "/" + d.substring(8, 12) + "-" + d.substring(12);
         }
         return value;
     }

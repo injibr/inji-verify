@@ -116,7 +116,10 @@ public class CARDocumentHtmlGeneratorServiceImpl implements HtmlGeneratorService
                     if (value != null && !value.equals("null")) {
                         try {
                             double d = Double.parseDouble(value);
-                            mergedHtml = mergedHtml.replace("REPLACEME-->" + key, String.format("%.2f", d).replace('.', ','));
+                            java.text.NumberFormat nf = java.text.NumberFormat.getNumberInstance(new java.util.Locale("pt", "BR"));
+                            nf.setMinimumFractionDigits(2);
+                            nf.setMaximumFractionDigits(2);
+                            mergedHtml = mergedHtml.replace("REPLACEME-->" + key, nf.format(d));
                         } catch (NumberFormatException e) {
                             mergedHtml = mergedHtml.replace("REPLACEME-->" + key, value.replace('.', ','));
                         }
@@ -139,6 +142,15 @@ public class CARDocumentHtmlGeneratorServiceImpl implements HtmlGeneratorService
         }
         mergedHtml = mergedHtml.replace("REPLACEME-->dataGeracao",
                 java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+
+        // Dynamic page numbering
+        int totalPages = mergedHtml.split("class=\"page\"").length - 1;
+        int pageNum = 1;
+        while (mergedHtml.contains("REPLACEME-->paginaInfo")) {
+            mergedHtml = mergedHtml.replaceFirst("REPLACEME-->paginaInfo", pageNum + " de " + totalPages);
+            pageNum++;
+        }
+
         return mergedHtml;
     }
 }
