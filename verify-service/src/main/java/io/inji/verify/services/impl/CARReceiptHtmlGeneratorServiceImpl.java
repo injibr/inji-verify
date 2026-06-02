@@ -94,6 +94,22 @@ public class CARReceiptHtmlGeneratorServiceImpl implements HtmlGeneratorService 
                 mergedHtml = mergedHtml.replace("REPLACEME-->" + key, "");
             }
         }
+
+        // Generate QR code for footer with codigoImovel
+        try {
+            String codigoImovel = data.get("codigoImovel");
+            String qrUrl = "https://www.car.gov.br/#/consultar/" + (codigoImovel != null ? codigoImovel : "");
+            String qrBase64 = fetchQrCodeBase64(qrUrl, 60);
+            if (qrBase64 != null) {
+                mergedHtml = mergedHtml.replace("REPLACEME-->qrCodeFooter",
+                        "<img class=\"qr-code\" src=\"data:image/png;base64," + qrBase64 + "\" />");
+            } else {
+                mergedHtml = mergedHtml.replace("REPLACEME-->qrCodeFooter", "");
+            }
+        } catch (Exception e) {
+            mergedHtml = mergedHtml.replace("REPLACEME-->qrCodeFooter", "");
+        }
+
         return mergedHtml;
     }
 
@@ -246,6 +262,42 @@ public class CARReceiptHtmlGeneratorServiceImpl implements HtmlGeneratorService 
         } catch (Exception e) {
             log.error("Error building map from polygon", e);
             return wkt;
+        }
+    }
+
+    private String fetchQrCodeBase64(String text, int size) {
+        try {
+            String url = "https://api.qrserver.com/v1/create-qr-code/?data=" +
+                    java.net.URLEncoder.encode(text, "UTF-8") + "&size=" + size + "x" + size + "&format=png";
+
+            javax.net.ssl.TrustManager[] trustAll = new javax.net.ssl.TrustManager[]{
+                    new javax.net.ssl.X509TrustManager() {
+                        public java.security.cert.X509Certificate[] getAcceptedIssuers() { return null; }
+                        public void checkClientTrusted(java.security.cert.X509Certificate[] c, String a) {}
+                        public void checkServerTrusted(java.security.cert.X509Certificate[] c, String a) {}
+                    }
+            };
+            javax.net.ssl.SSLContext sslContext = javax.net.ssl.SSLContext.getInstance("TLS");
+            sslContext.init(null, trustAll, new java.security.SecureRandom());
+
+            java.net.http.HttpClient client = java.net.http.HttpClient.newBuilder()
+                    .connectTimeout(java.time.Duration.ofSeconds(5))
+                    .sslContext(sslContext)
+                    .build();
+            java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder()
+                    .uri(java.net.URI.create(url))
+                    .timeout(java.time.Duration.ofSeconds(10))
+                    .GET()
+                    .build();
+            java.net.http.HttpResponse<byte[]> response = client.send(request, java.net.http.HttpResponse.BodyHandlers.ofByteArray());
+
+            if (response.statusCode() == 200) {
+                return java.util.Base64.getEncoder().encodeToString(response.body());
+            }
+            return null;
+        } catch (Exception e) {
+            log.warn("Could not generate QR code", e);
+            return null;
         }
     }
 
