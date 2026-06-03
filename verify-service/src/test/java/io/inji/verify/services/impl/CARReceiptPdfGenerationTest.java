@@ -38,15 +38,25 @@ class CARReceiptPdfGenerationTest {
         assertTrue(html.contains("CHÁCARA BOA ESPERANÇA"));
         assertTrue(html.contains("Trizidela do Vale"));
 
+        // First pass: generate PDF
         ByteArrayOutputStream pdfOutput = new ByteArrayOutputStream();
         ConverterProperties props = new ConverterProperties();
         props.setFontProvider(new DefaultFontProvider(true, false, false));
         HtmlConverter.convertToPdf(html, new PdfWriter(pdfOutput), props);
 
-        assertTrue(pdfOutput.size() > 0);
+        // Second pass: add footers
+        byte[] qrBytes = htmlGenerator.getQrCodeBytes(credentialMap.get("codigoImovel"));
+        java.io.ByteArrayInputStream pdfInput = new java.io.ByteArrayInputStream(pdfOutput.toByteArray());
+        ByteArrayOutputStream finalOutput = new ByteArrayOutputStream();
+        com.itextpdf.kernel.pdf.PdfReader pdfReader = new com.itextpdf.kernel.pdf.PdfReader(pdfInput);
+        com.itextpdf.kernel.pdf.PdfDocument pdfDoc = new com.itextpdf.kernel.pdf.PdfDocument(pdfReader, new PdfWriter(finalOutput));
+        new PageFooterEventHandler("CAR \u2013 Cadastro Ambiental Rural", qrBytes).writeFooters(pdfDoc);
+        pdfDoc.close();
+
+        assertTrue(finalOutput.size() > 0);
 
         Path outputPath = Path.of(System.getProperty("user.dir"), "MGI-CARReceipt.pdf");
-        Files.write(outputPath, pdfOutput.toByteArray());
+        Files.write(outputPath, finalOutput.toByteArray());
         assertTrue(new File(outputPath.toString()).exists());
         System.out.println("PDF gerado: " + outputPath);
     }
