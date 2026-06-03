@@ -94,7 +94,16 @@ public class CAFCredentialHtmlGeneratorServiceImpl implements HtmlGeneratorServi
                     StringBuilder html = new StringBuilder();
                     for (HashMap<String, String> entry : resultList) {
                         String tamanho = entry.get("tamanho") != null ? entry.get("tamanho").replace('.', ',') : "-";
+                        String tamanhoM2 = "-";
+                        try {
+                            double ha = Double.parseDouble(entry.get("tamanho"));
+                            java.text.NumberFormat nf = java.text.NumberFormat.getNumberInstance(new java.util.Locale("pt", "BR"));
+                            nf.setMinimumFractionDigits(2);
+                            nf.setMaximumFractionDigits(2);
+                            tamanhoM2 = nf.format(ha * 10000);
+                        } catch (Exception ignored) {}
                         mergedHtml = mergedHtml.replace("REPLACEME-->condicaoPosse", entry.get("condicaoPosse") != null ? entry.get("condicaoPosse") : "-");
+                        mergedHtml = mergedHtml.replace("REPLACEME-->tamanhoM2", tamanhoM2);
                         mergedHtml = mergedHtml.replace("REPLACEME-->tamanho", tamanho);
                         mergedHtml = mergedHtml.replace("REPLACEME-->municipio", entry.get("municipio") != null ? entry.get("municipio") : "-");
                     }
