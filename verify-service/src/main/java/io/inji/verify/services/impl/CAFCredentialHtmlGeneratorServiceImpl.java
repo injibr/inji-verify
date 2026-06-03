@@ -140,6 +140,10 @@ public class CAFCredentialHtmlGeneratorServiceImpl implements HtmlGeneratorServi
             }
         } catch (Exception ignored) {}
 
+        // Dynamic document emission date
+        mergedHtml = mergedHtml.replace("REPLACEME-->dataGeracaoDocumento",
+                java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")));
+
         return mergedHtml;
     }
 
