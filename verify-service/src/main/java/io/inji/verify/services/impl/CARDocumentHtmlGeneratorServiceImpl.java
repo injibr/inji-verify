@@ -111,6 +111,16 @@ public class CARDocumentHtmlGeneratorServiceImpl implements HtmlGeneratorService
 
                 } else if (COORD_FIELDS.contains(key)) {
                     mergedHtml = mergedHtml.replace("REPLACEME-->" + key, formatCoordinate(data.get(key), key));
+                } else if (key.equals("situacaoImovel")) {
+                    String value = data.get(key);
+                    String descricao = switch (value) {
+                        case "AT" -> "Ativo";
+                        case "PE" -> "Pendente";
+                        case "SU" -> "Suspenso";
+                        case "CA" -> "Cancelado";
+                        default -> value;
+                    };
+                    mergedHtml = mergedHtml.replace("REPLACEME-->" + key, descricao);
                 } else if (DECIMAL_FIELDS.contains(key)) {
                     String value = data.get(key);
                     if (value != null && !value.equals("null")) {
