@@ -1,5 +1,6 @@
 package io.inji.verify.controller;
 
+import io.inji.verify.dto.authorizationrequest.BankVPRequestResponseDto;
 import io.inji.verify.dto.authorizationrequest.VPRequestCreateDto;
 import io.inji.verify.dto.authorizationrequest.VPRequestResponseDto;
 import io.inji.verify.dto.core.ErrorDto;
@@ -8,13 +9,19 @@ import io.inji.verify.exception.BankCredentialException;
 import io.inji.verify.exception.PresentationDefinitionNotFoundException;
 import io.inji.verify.services.VerifiablePresentationRequestService;
 import io.inji.verify.services.VpRequestService;
+import io.inji.verify.shared.Constants;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * INJIBR-CUSTOM: controller para o fluxo de requisição de credenciais do banco.
+ * Cria um VP request e substitui o responseUri pelo endpoint do webhook do banco (/vp-process).
+ */
 @RequestMapping("/vp-credential-request")
 @RestController
 @Validated
@@ -22,6 +29,9 @@ import org.springframework.web.bind.annotation.*;
 public class VPCredentialRequestController {
     final VerifiablePresentationRequestService verifiablePresentationRequestService;
     private final VpRequestService vpRequestService;
+
+    @Value("${inji.vp-submission.base-url}")
+    String verifyServiceBaseUrl;
 
     public VPCredentialRequestController(VerifiablePresentationRequestService verifiablePresentationRequestService, VpRequestService vpRequestService) {
         this.verifiablePresentationRequestService = verifiablePresentationRequestService;
@@ -39,8 +49,10 @@ public class VPCredentialRequestController {
         }
         try {
             VPRequestResponseDto authorizationRequestResponse = verifiablePresentationRequestService.createAuthorizationRequest(vpRequestCreate);
-            vpRequestService.saveVpRequest(bankId,bankSecret, authorizationRequestResponse.getRequestId(), authorizationRequestResponse.getTransactionId());
-            return ResponseEntity.status(HttpStatus.CREATED).body(authorizationRequestResponse);
+            String bankResponseUri = verifyServiceBaseUrl + Constants.RESPONSE_SUBMISSION_URI_ROOT + Constants.RESPONSE_PROCESS_URI_ROOT;
+            BankVPRequestResponseDto bankResponse = new BankVPRequestResponseDto(authorizationRequestResponse, bankResponseUri);
+            vpRequestService.saveVpRequest(bankId, bankSecret, authorizationRequestResponse.getRequestId(), authorizationRequestResponse.getTransactionId());
+            return ResponseEntity.status(HttpStatus.CREATED).body(bankResponse);
         } catch (PresentationDefinitionNotFoundException e) {
             log.error(e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorDto(ErrorCode.NO_PRESENTATION_DEFINITION));
