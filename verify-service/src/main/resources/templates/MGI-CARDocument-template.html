@@ -37,11 +37,16 @@
           text-align: center;
           font-size: 10px;
           padding-top: 10px;
+          border-top: 1px solid #000;
         }
 
         h1 {
           text-align: center;
-          font-size: 16px;
+          font-size: 18px;
+          font-weight: bold;
+          width: 100%;
+          margin: 10px 0 0 0;
+          padding: 0;
         }
 
         table {
@@ -73,7 +78,13 @@
         }
 
         ol {
-          margin-left: 15px;
+          margin-left: 0;
+          padding-left: 15px;
+          text-align: justify;
+        }
+
+        li {
+          text-align: justify;
         }
     </style>
 </head>
@@ -83,28 +94,28 @@
 <div class="page">
     <div class="page-content">
         <img class="flag" src="https://upload.wikimedia.org/wikipedia/en/0/05/Flag_of_Brazil.svg" alt="Bandeira do Brasil">
-        <h1>Demonstrativo do Status das Informações Declaradas no CAR</h1>
+        <table style="margin-top: 10px;"><tr><td style="text-align: left; font-size: 25px; font-weight: bold; padding: 8px; border: none;">Demonstrativo da Situação das Informações Declaradas no CAR</td></tr></table>
 
         <table>
             <tr>
-                <td><strong>Registro de Inscrição no CAR:</strong> REPLACEME-->codigoImovel</td>
-                <td><strong>Data de Inscrição:</strong> REPLACEME-->dataCadastro</td>
-                <td><strong>Data da Última Alteração:</strong>
+                <td><strong>Registro de Inscrição no CAR:</strong><br/>REPLACEME-->codigoImovel</td>
+                <td><strong>Data de Inscrição:</strong><br/>REPLACEME-->dataCadastro</td>
+                <td><strong>Data da Última Alteração:</strong><br/>
                     REPLACEME-->dataUltimaAtualizacaoCadastro
                 </td>
             </tr>
         </table>
-        <div class="section-title">Dados do Imóvel Rural</div>
+        <div class="section-title" style="font-size: 16px;">Dados do Imóvel Rural</div>
         <table>
             <tr>
-                <td colspan="2"><strong>Area do Imóvel Rural:</strong> REPLACEME-->areaTotalImovel
+                <td colspan="2"><strong>Area do Imóvel Rural:</strong> REPLACEME-->areaTotalImovel ha
                 </td>
                 <td><strong>Módulos Fiscais:</strong> REPLACEME-->quantidadeModulosFiscais</td>
             </tr>
             <tr>
                 <td><strong>Coordenadas Geográficas do Centróide:</strong></td>
-                <td><strong>Latitude:</strong> REPLACEME-->coordenadaImovelX</td>
-                <td><strong>Longitude:</strong> REPLACEME-->coordenadaImovelY</td>
+                <td><strong>Latitude:</strong> REPLACEME-->coordenadaImovelY</td>
+                <td><strong>Longitude:</strong> REPLACEME-->coordenadaImovelX</td>
             </tr>
             <tr>
                 <td colspan="2"><strong>Município:</strong> REPLACEME-->municipio</td>
@@ -119,9 +130,7 @@
                 <td colspan="3"><strong>Situação do Cadastro:</strong> REPLACEME-->situacaoImovel
                 </td>
             </tr>
-            <tr>
-                <td colspan="3"><strong>Condição do PRA:</strong></td>
-            </tr>
+
         </table>
 
         <div class="section-title">Informações Gerais</div>
@@ -145,31 +154,31 @@
                 vegetação, nem isenta as autorizações necessárias para atividade econômica na propriedade rural.
             </li>
         </ol>
-        <div class="section-title">Cobertura do Solo</div>
+        <div class="section-title" style="font-size: 16px;">Cobertura do Solo</div>
         <table style="width: 100%; border-collapse: collapse; font-family: Arial, sans-serif; font-size: 14px;">
             <thead>
             <tr>
                 <th style="border: 1px solid #000; padding: 6px; text-align: left;">Descrição</th>
-                <th style="border: 1px solid #000; padding: 6px; text-align: right;">Área (ha)</th>
+                <th style="border: 1px solid #000; padding: 6px; text-align: center;">Área (ha)</th>
             </tr>
             </thead>
             <tbody>
             <tr>
                 <td style="border: 1px solid #000; padding: 6px;">Área de Remanescente de Vegetação Nativa</td>
-                <td style="border: 1px solid #000; padding: 6px; text-align: right;">
+                <td style="border: 1px solid #000; padding: 6px; text-align: center;">
                     REPLACEME-->areaRemanescenteVegetacaoNativa
                 </td>
             </tr>
             <tr style="background-color: #e6e6e6;">
                 <td style="border: 1px solid #000; padding: 6px;">Área Rural Consolidada</td>
-                <td style="border: 1px solid #000; padding: 6px; text-align: right;">
+                <td style="border: 1px solid #000; padding: 6px; text-align: center;">
                     REPLACEME-->areaConsolidada
                 </td>
             </tr>
             <tr>
                 <td style="border: 1px solid #000; padding: 6px;">Área de Servidão Administrativa</td>
-                <td style="border: 1px solid #000; padding: 6px; text-align: right;">
-                    0.0
+                <td style="border: 1px solid #000; padding: 6px; text-align: center;">
+                    REPLACEME-->areaServidaoAdministrativa
                 </td>
             </tr>
             </tbody>
@@ -178,8 +187,8 @@
 
     <div class="footer">
         <p><strong>CAR – Cadastro Ambiental Rural</strong></p>
-        <p><strong>Página 1 de 3</strong></p>
-        <p>Demonstrativo gerado em 11/07/25</p>
+        <p><strong>Página REPLACEME-->paginaInfo</strong></p>
+        <p><em>Demonstrativo gerado em REPLACEME-->dataGeracao</em></p>
     </div>
 </div>
 
@@ -187,93 +196,93 @@
 <div class="page">
     <div class="page-content">
         <img class="flag" src="https://upload.wikimedia.org/wikipedia/en/0/05/Flag_of_Brazil.svg" alt="Bandeira do Brasil">
-        <h1>Demonstrativo do Status das Informações Declaradas no CAR</h1>
+        <table style="margin-top: 10px;"><tr><td style="text-align: left; font-size: 25px; font-weight: bold; padding: 8px; border: none;">Demonstrativo da Situação das Informações Declaradas no CAR</td></tr></table>
 
         <table>
             <tr>
-                <td><strong>Registro de Inscrição no CAR:</strong>REPLACEME-->codigoImovel</td>
-                <td><strong>Data de Inscrição:</strong> REPLACEME-->dataCadastro</td>
-                <td><strong>Data da Última Alteração:</strong>
+                <td><strong>Registro de Inscrição no CAR:</strong><br/>REPLACEME-->codigoImovel</td>
+                <td><strong>Data de Inscrição:</strong><br/>REPLACEME-->dataCadastro</td>
+                <td><strong>Data da Última Alteração:</strong><br/>
                     REPLACEME-->dataUltimaAtualizacaoCadastro
                 </td>
             </tr>
         </table>
         <div class="section-title">Reserva Legal</div>
-        <p><strong>Localização da Reserva Legal:</strong> REPLACEME-->legalReserveLocation</p>
-        <p><strong>Informação Documental</strong></p>
+        <p><strong>Localização da Reserva Legal:</strong> REPLACEME-->situacaoReservaLegal</p>
+        <p style="margin-bottom: 2px;"><strong>Informação Documental</strong></p>
         <table>
             <tr>
                 <th>Descrição</th>
-                <th>Área (ha)</th>
+                <th style="text-align: center;">Área (ha)</th>
             </tr>
             <tr>
                 <td>Área de Reserva Legal Averba, referente ao Art. 30 da Lei nº 12.651/2012</td>
-                <td>0.0</td>
+                <td style="text-align: center;">REPLACEME-->areaReservaLegalAverbadaDocumental</td>
             </tr>
         </table>
-        <p><strong>Informação Georreferenciada</strong></p>
+        <p style="margin-bottom: 2px;"><strong>Informação Georreferenciada</strong></p>
         <table>
             <tr>
                 <th>Descrição</th>
-                <th>Área (ha)</th>
+                <th style="text-align: center;">Área (ha)</th>
             </tr>
             <tr>
                 <td>Área de Reserva Legal Averba</td>
-                <td>REPLACEME-->areaReservaLegalAverbada</td>
+                <td style="text-align: center;">REPLACEME-->areaReservaLegalAverbada</td>
             </tr>
-            <tr>
+            <tr style="background-color: #e6e6e6;">
                 <td>Área de Reserva Legal Aprovada não Averba</td>
-                <td>REPLACEME-->areaReservaLegalAprovadaNaoAverbada</td>
+                <td style="text-align: center;">REPLACEME-->areaReservaLegalAprovadaNaoAverbada</td>
             </tr>
             <tr>
                 <td>Área de Reserva Legal Proposta</td>
-                <td>REPLACEME-->areaReservaLegalProposta</td>
+                <td style="text-align: center;">REPLACEME-->areaReservaLegalProposta</td>
             </tr>
-            <tr>
-                <td><strong>Total de Reserva Legal Declarada pelo Proprietário/Possuidor</strong></td>
-                <td>REPLACEME-->areaReservaLegalDeclaradaProprietarioPossuidor</td>
+            <tr style="background-color: #e6e6e6;">
+                <td>Total de Reserva Legal Declarada pelo Proprietário/Possuidor</td>
+                <td style="text-align: center;">REPLACEME-->areaReservaLegalDeclaradaProprietarioPossuidor</td>
             </tr>
         </table>
         <div class="section-title">Áreas de Preservação Permanente (APP)</div>
         <table>
             <tr>
                 <th>Descrição</th>
-                <th>Área (ha)</th>
+                <th style="text-align: center;">Área (ha)</th>
             </tr>
             <tr>
                 <td>APP</td>
-                <td>REPLACEME-->areaPreservacaoPermanente</td>
+                <td style="text-align: center;">REPLACEME-->areaPreservacaoPermanente</td>
             </tr>
-            <tr>
+            <tr style="background-color: #e6e6e6;">
                 <td>APP em Área Rural Consolidada</td>
-                <td>REPLACEME-->areaPreservacaoPermanenteAreaRuralConsolida</td>
+                <td style="text-align: center;">REPLACEME-->areaPreservacaoPermanenteAreaRuralConsolidada</td>
             </tr>
             <tr>
                 <td>APP em Área de Remanescente de Vegetação Nativa</td>
-                <td>0.0</td>
+                <td style="text-align: center;">REPLACEME-->areaPreservacaoPermanenteAreaRemanescenteVegetacaoNativa</td>
             </tr>
         </table>
         <div class="section-title">Áreas de Uso Restrito</div>
         <table>
             <tr>
                 <th>Descrição</th>
-                <th>Área (ha)</th>
+                <th style="text-align: center;">Área (ha)</th>
             </tr>
             <tr>
                 <td>Áreas de Uso Restrito</td>
-                <td>REPLACEME-->areaUsoRestrito</td>
+                <td style="text-align: center;">REPLACEME-->areaUsoRestrito</td>
             </tr>
             <tr>
                 <td>Área de Uso Restrito por declividade</td>
-                <td>REPLACEME-->areaUsoRestritoDeclividade</td>
+                <td style="text-align: center;">REPLACEME-->areaUsoRestritoDeclividade</td>
             </tr>
         </table>
     </div>
 
     <div class="footer">
         <p><strong>CAR – Cadastro Ambiental Rural</strong></p>
-        <p><strong>Página 2 de 3</strong></p>
-        <p>Demonstrativo gerado em 11/07/25</p>
+        <p><strong>Página REPLACEME-->paginaInfo</strong></p>
+        <p><em>Demonstrativo gerado em REPLACEME-->dataGeracao</em></p>
     </div>
 </div>
 
@@ -281,13 +290,13 @@
 <div class="page">
     <div class="page-content">
         <img class="flag" src="https://upload.wikimedia.org/wikipedia/en/0/05/Flag_of_Brazil.svg" alt="Bandeira do Brasil">
-        <h1>Demonstrativo do Status das Informações Declaradas no CAR</h1>
+        <table style="margin-top: 10px;"><tr><td style="text-align: left; font-size: 25px; font-weight: bold; padding: 8px; border: none;">Demonstrativo da Situação das Informações Declaradas no CAR</td></tr></table>
 
         <table>
             <tr>
-                <td><strong>Registro de Inscrição no CAR:</strong> REPLACEME-->codigoImovel</td>
-                <td><strong>Data de Inscrição:</strong> REPLACEME-->dataCadastro</td>
-                <td><strong>Data da Última Alteração:</strong>
+                <td><strong>Registro de Inscrição no CAR:</strong><br/>REPLACEME-->codigoImovel</td>
+                <td><strong>Data de Inscrição:</strong><br/>REPLACEME-->dataCadastro</td>
+                <td><strong>Data da Última Alteração:</strong><br/>
                     REPLACEME-->dataUltimaAtualizacaoCadastro
                 </td>
             </tr>
@@ -308,23 +317,23 @@
         <table>
             <tr>
                 <th>Descrição</th>
-                <th>Área (ha)</th>
+                <th style="text-align: center;">Área (ha)</th>
             </tr>
             <tr>
                 <td>Passivo / Excedente de Reserva Legal</td>
-                <td>-233.4352753232762</td>
+                <td style="text-align: center;">REPLACEME-->areaReservaLegalExcedentePassivo</td>
             </tr>
-            <tr>
+            <tr style="background-color: #e6e6e6;">
                 <td>Area de Reserva Legal a recompor</td>
-                <td>0.0</td>
+                <td style="text-align: center;">REPLACEME-->areaReservaLegalRecompor</td>
             </tr>
             <tr>
                 <td>Áreas de Preservação Permanente a recompor</td>
-                <td>REPLACEME-->areaPreservacaoPermanenteRecompor</td>
+                <td style="text-align: center;">REPLACEME-->areaPreservacaoPermanenteRecompor</td>
             </tr>
-            <tr>
+            <tr style="background-color: #e6e6e6;">
                 <td>Área de Uso Restrito a recompor</td>
-                <td>0.0</td>
+                <td style="text-align: center;">REPLACEME-->areaUsoRestritoRecompor</td>
             </tr>
         </table>
 
@@ -337,8 +346,8 @@
                 <th style="padding: 6px;">Fase</th>
                 <th style="padding: 6px;">Descrição</th>
                 <th style="padding: 6px;">Processamento</th>
-                <th style="padding: 6px;">Área de Sobreposição (ha)</th>
-                <th style="padding: 6px;">Percentual de Sobreposição (%)</th>
+                <th style="padding: 6px; text-align: center;">Área de Sobreposição (ha)</th>
+                <th style="padding: 6px; text-align: center;">Percentual de Sobreposição (%)</th>
             </tr>
             </thead>
             REPLACEME-->sobreposicoesAreasEmbargadas
@@ -349,8 +358,8 @@
 
     <div class="footer">
         <p><strong>CAR – Cadastro Ambiental Rural</strong></p>
-        <p><strong>Página 3 de 3</strong></p>
-        <p>Demonstrativo gerado em 11/07/25</p>
+        <p><strong>Página REPLACEME-->paginaInfo</strong></p>
+        <p><em>Demonstrativo gerado em REPLACEME-->dataGeracao</em></p>
     </div>
 </div>
 

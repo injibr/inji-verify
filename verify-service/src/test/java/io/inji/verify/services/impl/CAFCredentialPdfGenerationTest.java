@@ -8,6 +8,9 @@ import io.inji.verify.services.VcParserService;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -31,14 +34,14 @@ class CAFCredentialPdfGenerationTest {
         assertEquals("CAFCredential", credentialType);
         assertTrue(credentialMap.containsKey("membros"));
         assertTrue(credentialMap.containsKey("areas"));
-        assertTrue(credentialMap.get("membros").contains("Jose da Silva"));
+        assertTrue(credentialMap.get("membros").contains("JURANDY DA SILVA LOPES JUNIOR"));
 
         String html = htmlGenerator.replaceAndGetHtml(credentialMap, issuerId, credentialType);
 
         assertFalse(html.contains("REPLACEME-->membros"));
-        assertTrue(html.contains("Jose da Silva"));
-        assertTrue(html.contains("Ana da Silva"));
-        assertTrue(html.contains("11122233344"));
+        assertTrue(html.contains("JURANDY DA SILVA LOPES JUNIOR"));
+        assertTrue(html.contains("BEATRIZ COELHO DAS NEVES"));
+        assertTrue(html.contains("040.***.**"));
 
         ByteArrayOutputStream pdfOutput = new ByteArrayOutputStream();
         ConverterProperties props = new ConverterProperties();
@@ -46,5 +49,10 @@ class CAFCredentialPdfGenerationTest {
         HtmlConverter.convertToPdf(html, new PdfWriter(pdfOutput), props);
 
         assertTrue(pdfOutput.size() > 0);
+
+        Path outputPath = Path.of(System.getProperty("user.dir"), "MDA-CAFCredential.pdf");
+        Files.write(outputPath, pdfOutput.toByteArray());
+        assertTrue(new File(outputPath.toString()).exists());
+        System.out.println("PDF gerado: " + outputPath);
     }
 }

@@ -2,10 +2,10 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Demonstrativo do Status no CAR</title>
+    <title>RECIBO DE INSCRIÇÃO DO IMÓVEL RURAL NO CAR</title>
     <style>
         @page {
-          margin: 10px; /* Minimal margin on all sides for print/PDF */
+          margin: 10px 10px 85px 10px;
         }
         body {
           font-family: Arial, sans-serif;
@@ -16,12 +16,12 @@
 
         .page {
           page-break-after: always;
-          height: 980px;
+          
           box-sizing: border-box;
-          position: relative;
+          
           margin: 0;
           padding: 18px;
-        }
+                  }
 
         table {
           width: 100%;
@@ -45,14 +45,14 @@
     .footer {
       position: absolute;
       bottom: -100px;
-      left: 0;
+      left: 18px;
       right: 0;
       height: 80px;
       border-top: 1px solid #000;
       display: flex;
-      justify-content: center; /* centers footer-text horizontally */
-      align-items: center;      /* aligns both footer-text and QR code vertically */
-      padding: 0 18px;
+      justify-content: center;
+      align-items: center;
+      padding: 0 0;
       box-sizing: border-box;
     }
 
@@ -110,13 +110,13 @@
             <td colspan="4">Nome do Imóvel Rural: REPLACEME-->nomeImovel</td>
         </tr>
         <tr>
-            <td colspan="3">Módulos Fiscais: REPLACEME-->municipio</td>
-            <td>UF: REPLACEME-->unidadefederativa</td>
+            <td colspan="3">Município: REPLACEME-->municipio</td>
+            <td>UF: REPLACEME-->unidadeFederativa</td>
         </tr>
         <tr>
             <td colspan="2">Coordenadas Geográficas do Centroide do Imóvel Rural:</td>
-            <td colspan="1">Latitude: REPLACEME-->coordenadaImovelX</td>
-            <td colspan="1">Longitude: REPLACEME-->coordenadaImovelY</td>
+            <td colspan="1">Latitude: REPLACEME-->coordenadaImovelY</td>
+            <td colspan="1">Longitude: REPLACEME-->coordenadaImovelX</td>
         </tr>
         <tr>
             <td colspan="3">Area Total (ha) do Imóvel Rural: REPLACEME-->areaTotalImovel</td>
@@ -139,15 +139,6 @@
         <li>O declarante assume plena responsabilidade ambiental sobre o Imóvel Rural declarado em seu nome, sem prejuízode responsabilização por danos ambientais em área contígua, posteriormente comprovada como de sua propriedade ou posse.
             <br><br><span class="spacer-vertical"></span></li>
     </ol>
-    <div class="footer">
-        <div class="footer-text">
-            <p style="font-size: 15px;">CAR – Cadastro Ambiental Rural</p>
-            <p>Página 1/2</p>
-        </div>
-        <img class="qr-code" src="https://api.qrserver.com/v1/create-qr-code/?data=YOUR_DATA&size=150x150" alt="QR Code">
-
-    </div>
-
 </div>
 <!-- Page Break for PDF Rendering -->
 <div class="page">
@@ -166,17 +157,13 @@
     <p style="border: 1px solid black;">REPLACEME-->informacoesAdicionais</p>
     <div class="section-title">REPRESENTAÇÃO GRÁFICA</div>
     <div>
-        <img src="data:image/jpeg;base64,REPLACEME-->geoImovel" alt="Satellite Image" style="width:100%; max-width:800px;" />
-        <!--        <p style="width:100%; max-width:800px;">REPLACEME-->geoImovel</p>-->
+        <div style="text-align: center;">REPLACEME-->geoImovel</div>
     </div>
 
 
     <div class="section-title">IDENTIFICAÇÃO DO PROPRIETÁRIO/POSSUIDOR</div>
     <table>
-        <tr>
-            <td colspan="3">CPF: REPLACEME-->cpfCnpj</td>
-            <td colspan="3">Nome: REPLACEME-->nomeProprietario</td>
-        </tr>
+        REPLACEME-->proprietarios
     </table>
     <div class="section-title" style="font-weight: bold; margin-bottom: 4px;">
         ÁREAS DECLARADAS (em hectares)
@@ -225,13 +212,6 @@
             <td colspan="2" style="border: none;"></td>
         </tr>
     </table>
-    <div class="footer">
-        <div class="footer-text">
-            <p style="font-size: 16px;">CAR – Cadastro Ambiental Rural</p>
-            <p>Página 1/2</p>
-        </div>
-        <img class="qr-code" src="data:image/png;base64,$qrCodeImage" alt="QR Code">
-    </div>
 </div>
 </body>
 </html>

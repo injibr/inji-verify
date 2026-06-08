@@ -5,7 +5,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -16,7 +18,10 @@ public class CarReceiptAstHtmlGeneratorServiceImpl implements HtmlGeneratorServi
     @Override
     public String replaceAndGetHtml(Map<String, String> data, String issuerId, String credentialType) {
         String mergedHtml = getCredentialSupportedTemplateString(issuerId, credentialType);
-        for (String key : data.keySet()) {
+        List<String> sortedKeys = data.keySet().stream()
+                .sorted(Comparator.comparingInt(String::length).reversed())
+                .toList();
+        for (String key : sortedKeys) {
             try {
                 if (key.equals("proprietarios")) {
                     String input = data.get(key);
@@ -55,14 +60,13 @@ public class CarReceiptAstHtmlGeneratorServiceImpl implements HtmlGeneratorServi
                         html.append("        <td colspan=\"3\">Nome: ").append(entry.get("nome")).append("</td>\n");
                         html.append("    </tr>\n");
                     }
-                    mergedHtml = mergedHtml.replaceAll("REPLACEME-->" + key, html.toString());
+                    mergedHtml = mergedHtml.replace("REPLACEME-->" + key, html.toString());
                 }else{
-                    mergedHtml = mergedHtml.replaceAll("REPLACEME-->" + key, data.get(key));
+                    mergedHtml = mergedHtml.replace("REPLACEME-->" + key, data.get(key) != null ? data.get(key) : "");
                 }
             } catch (IllegalArgumentException ex) {
                 log.error("Error while replacing key in template {}", key);
-                // If there's an error (e.g., special characters in the value), remove the placeholder
-                mergedHtml = mergedHtml.replaceAll("REPLACEME-->" + key, "");
+                mergedHtml = mergedHtml.replace("REPLACEME-->" + key, "");
             }
         }
         return mergedHtml;

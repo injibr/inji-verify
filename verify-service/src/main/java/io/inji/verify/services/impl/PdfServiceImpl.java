@@ -52,7 +52,7 @@ public class PdfServiceImpl implements PdfService {
             String htmlGeneratorType;
             if (!Objects.isNull(data.get("tipoImovel")) && data.get("tipoImovel").equals("AST")){
                 credentialType = "CARReceiptAST";
-                htmlGeneratorType = "CarReceiptAstHtmlGeneratorServiceImpl";
+                htmlGeneratorType = "CARReceiptHtmlGeneratorServiceImpl";
             } else if (credentialType.equals("CAFCredential")) {
                 htmlGeneratorType = "CAFCredentialHtmlGeneratorServiceImpl";
             } else if (credentialType.equals("CCIRCredential")) {
@@ -60,10 +60,10 @@ public class PdfServiceImpl implements PdfService {
             }else if (credentialType.equals("CARDocument")) {
                 htmlGeneratorType = "CARDocumentHtmlGeneratorServiceImpl";
             }  else if (!Objects.isNull(data.get("tipoImovel")) && data.get("tipoImovel").equals("PCT")){
-                htmlGeneratorType = "defaultHtmlGeneratorService";
+                htmlGeneratorType = "CARReceiptHtmlGeneratorServiceImpl";
                 credentialType = "CARReceiptPCT";
             }else {
-                htmlGeneratorType = "defaultHtmlGeneratorService";
+                htmlGeneratorType = "CARReceiptHtmlGeneratorServiceImpl";
             }
 
             String html = htmlGeneratorFactory.getHtmlGeneratorService(htmlGeneratorType)
@@ -74,7 +74,25 @@ public class PdfServiceImpl implements PdfService {
             DefaultFontProvider defaultFont = new DefaultFontProvider(true, false, false);
             ConverterProperties converterProperties = new ConverterProperties();
             converterProperties.setFontProvider(defaultFont);
-            HtmlConverter.convertToPdf(html, pdfwriter, converterProperties);
+
+            // For CARReceipt templates, use two-pass approach for footer
+            if (credentialType.startsWith("CARReceipt")) {
+                // First pass: generate PDF
+                HtmlConverter.convertToPdf(html, pdfwriter, converterProperties);
+                byte[] pdfBytes = outputStream.toByteArray();
+
+                // Second pass: add footers
+                byte[] qrBytes = ((CARReceiptHtmlGeneratorServiceImpl) htmlGeneratorFactory.getHtmlGeneratorService(htmlGeneratorType)).getQrCodeBytes(data.get("codigoImovel"));
+                java.io.ByteArrayInputStream pdfInput = new java.io.ByteArrayInputStream(pdfBytes);
+                ByteArrayOutputStream finalOutput = new ByteArrayOutputStream();
+                com.itextpdf.kernel.pdf.PdfReader pdfReader = new com.itextpdf.kernel.pdf.PdfReader(pdfInput);
+                com.itextpdf.kernel.pdf.PdfDocument pdfDoc = new com.itextpdf.kernel.pdf.PdfDocument(pdfReader, new PdfWriter(finalOutput));
+                new PageFooterEventHandler("CAR \u2013 Cadastro Ambiental Rural", qrBytes).writeFooters(pdfDoc);
+                pdfDoc.close();
+                return new ByteArrayInputStream(finalOutput.toByteArray());
+            } else {
+                HtmlConverter.convertToPdf(html, pdfwriter, converterProperties);
+            }
             return new ByteArrayInputStream(outputStream.toByteArray());
         } catch (Exception ex) {
             throw new PdfParseException();

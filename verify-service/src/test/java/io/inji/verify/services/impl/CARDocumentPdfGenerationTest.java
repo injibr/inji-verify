@@ -8,6 +8,9 @@ import io.inji.verify.services.VcParserService;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -35,9 +38,8 @@ class CARDocumentPdfGenerationTest {
 
         String html = htmlGenerator.replaceAndGetHtml(credentialMap, issuerId, credentialType);
 
-        assertFalse(html.contains("REPLACEME-->sobreposicoesAreasEmbargadas"));
-        assertFalse(html.contains("REPLACEME-->sobreposicoesUnidadeConservacao"));
-        assertFalse(html.contains("REPLACEME-->sobreposicoesTerraIndigena"));
+        assertTrue(html.contains("Trizidela do Vale"));
+        assertTrue(html.contains("MA-2112233-044B8D8BC23345BE88179D0385A8BB1A"));
         assertTrue(html.contains("Embargo"));
         assertTrue(html.contains("Parque Nacional XYZ"));
         assertTrue(html.contains("Terra Indigena ABC"));
@@ -48,5 +50,10 @@ class CARDocumentPdfGenerationTest {
         HtmlConverter.convertToPdf(html, new PdfWriter(pdfOutput), props);
 
         assertTrue(pdfOutput.size() > 0);
+
+        Path outputPath = Path.of(System.getProperty("user.dir"), "MGI-CARDocument.pdf");
+        Files.write(outputPath, pdfOutput.toByteArray());
+        assertTrue(new File(outputPath.toString()).exists());
+        System.out.println("PDF gerado: " + outputPath);
     }
 }
