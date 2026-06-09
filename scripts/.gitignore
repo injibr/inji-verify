@@ -1,1 +1,3 @@
 .env
+.token_cache.json
+.last_webhook_id
