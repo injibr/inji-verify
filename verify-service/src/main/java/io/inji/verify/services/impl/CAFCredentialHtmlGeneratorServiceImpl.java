@@ -168,19 +168,8 @@ public class CAFCredentialHtmlGeneratorServiceImpl implements HtmlGeneratorServi
     private String generateQrCodeBase64(String text, int size) throws Exception {
         String url = "https://api.qrserver.com/v1/create-qr-code/?data=" + java.net.URLEncoder.encode(text, "UTF-8") + "&size=" + size + "x" + size + "&format=png";
 
-        javax.net.ssl.TrustManager[] trustAll = new javax.net.ssl.TrustManager[]{
-                new javax.net.ssl.X509TrustManager() {
-                    public java.security.cert.X509Certificate[] getAcceptedIssuers() { return null; }
-                    public void checkClientTrusted(java.security.cert.X509Certificate[] c, String a) {}
-                    public void checkServerTrusted(java.security.cert.X509Certificate[] c, String a) {}
-                }
-        };
-        javax.net.ssl.SSLContext sslContext = javax.net.ssl.SSLContext.getInstance("TLS");
-        sslContext.init(null, trustAll, new java.security.SecureRandom());
-
         java.net.http.HttpClient client = java.net.http.HttpClient.newBuilder()
                 .connectTimeout(java.time.Duration.ofSeconds(5))
-                .sslContext(sslContext)
                 .build();
         java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder()
                 .uri(java.net.URI.create(url))

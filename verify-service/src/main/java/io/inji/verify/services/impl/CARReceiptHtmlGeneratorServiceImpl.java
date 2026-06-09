@@ -285,19 +285,12 @@ public class CARReceiptHtmlGeneratorServiceImpl implements HtmlGeneratorService 
             String url = "https://api.qrserver.com/v1/create-qr-code/?data=" +
                     java.net.URLEncoder.encode(qrUrl, "UTF-8") + "&size=60x60&format=png";
 
-            javax.net.ssl.TrustManager[] trustAll = new javax.net.ssl.TrustManager[]{
-                    new javax.net.ssl.X509TrustManager() {
-                        public java.security.cert.X509Certificate[] getAcceptedIssuers() { return null; }
-                        public void checkClientTrusted(java.security.cert.X509Certificate[] c, String a) {}
-                        public void checkServerTrusted(java.security.cert.X509Certificate[] c, String a) {}
-                    }
-            };
-            javax.net.ssl.SSLContext sslContext = javax.net.ssl.SSLContext.getInstance("TLS");
-            sslContext.init(null, trustAll, new java.security.SecureRandom());
+            // Using default SSL context
+            
 
             java.net.http.HttpClient client = java.net.http.HttpClient.newBuilder()
                     .connectTimeout(java.time.Duration.ofSeconds(5))
-                    .sslContext(sslContext)
+                    
                     .build();
             java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder()
                     .uri(java.net.URI.create(url))
@@ -320,19 +313,12 @@ public class CARReceiptHtmlGeneratorServiceImpl implements HtmlGeneratorService 
             String url = "https://api.qrserver.com/v1/create-qr-code/?data=" +
                     java.net.URLEncoder.encode(text, "UTF-8") + "&size=" + size + "x" + size + "&format=png";
 
-            javax.net.ssl.TrustManager[] trustAll = new javax.net.ssl.TrustManager[]{
-                    new javax.net.ssl.X509TrustManager() {
-                        public java.security.cert.X509Certificate[] getAcceptedIssuers() { return null; }
-                        public void checkClientTrusted(java.security.cert.X509Certificate[] c, String a) {}
-                        public void checkServerTrusted(java.security.cert.X509Certificate[] c, String a) {}
-                    }
-            };
-            javax.net.ssl.SSLContext sslContext = javax.net.ssl.SSLContext.getInstance("TLS");
-            sslContext.init(null, trustAll, new java.security.SecureRandom());
+            // Using default SSL context
+            
 
             java.net.http.HttpClient client = java.net.http.HttpClient.newBuilder()
                     .connectTimeout(java.time.Duration.ofSeconds(5))
-                    .sslContext(sslContext)
+                    
                     .build();
             java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder()
                     .uri(java.net.URI.create(url))
@@ -356,19 +342,12 @@ public class CARReceiptHtmlGeneratorServiceImpl implements HtmlGeneratorService 
             // Esri World Imagery (satellite)
             String url = String.format("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/%d/%d/%d", zoom, y, x);
 
-            javax.net.ssl.TrustManager[] trustAll = new javax.net.ssl.TrustManager[]{
-                    new javax.net.ssl.X509TrustManager() {
-                        public java.security.cert.X509Certificate[] getAcceptedIssuers() { return null; }
-                        public void checkClientTrusted(java.security.cert.X509Certificate[] c, String a) {}
-                        public void checkServerTrusted(java.security.cert.X509Certificate[] c, String a) {}
-                    }
-            };
-            javax.net.ssl.SSLContext sslContext = javax.net.ssl.SSLContext.getInstance("TLS");
-            sslContext.init(null, trustAll, new java.security.SecureRandom());
+            // Using default SSL context
+            
 
             java.net.http.HttpClient client = java.net.http.HttpClient.newBuilder()
                     .connectTimeout(java.time.Duration.ofSeconds(5))
-                    .sslContext(sslContext)
+                    
                     .build();
             java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder()
                     .uri(java.net.URI.create(url))
