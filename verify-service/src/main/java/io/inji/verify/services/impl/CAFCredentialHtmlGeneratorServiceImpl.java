@@ -18,6 +18,11 @@ public class CAFCredentialHtmlGeneratorServiceImpl implements HtmlGeneratorServi
         String mergedHtml = getCredentialSupportedTemplateString(issuerId, credentialType);
         for (String key : data.keySet()) {
             try {
+                String rawValue = data.get(key);
+                if (rawValue != null && rawValue.matches("\\$\\{.+}")) {
+                    mergedHtml = mergedHtml.replace("REPLACEME-->" + key, "-");
+                    continue;
+                }
                 if (key.equals("membros")) {
                     String input = data.get(key);
 
