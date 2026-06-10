@@ -31,16 +31,24 @@ public class CAFCredentialHtmlGeneratorServiceImpl implements HtmlGeneratorServi
                         String mapContent = mapMatcher.group(1);
                         HashMap<String, String> map = new HashMap<>();
 
-                        Pattern pairPattern = Pattern.compile("(\\w+)=([^,]+)(?:,|$)");
-                        Matcher pairMatcher = pairPattern.matcher(mapContent);
-
-                        while (pairMatcher.find()) {
-                            String matcherKey = pairMatcher.group(1).trim();
-                            String value = pairMatcher.group(2).trim();
-                            map.put(matcherKey, value);
+                        // Try JSON format: "key":"value"
+                        Pattern jsonPattern = Pattern.compile("\"(\\w+)\"\\s*:\\s*\"([^\"]*)\"");
+                        Matcher jsonMatcher = jsonPattern.matcher(mapContent);
+                        boolean foundJson = false;
+                        while (jsonMatcher.find()) {
+                            map.put(jsonMatcher.group(1).trim(), jsonMatcher.group(2).trim());
+                            foundJson = true;
                         }
 
-                        // Extract only nome and cpfCnpj
+                        // Fallback: key=value format
+                        if (!foundJson) {
+                            Pattern pairPattern = Pattern.compile("(\\w+)=([^,]+)(?:,|$)");
+                            Matcher pairMatcher = pairPattern.matcher(mapContent);
+                            while (pairMatcher.find()) {
+                                map.put(pairMatcher.group(1).trim(), pairMatcher.group(2).trim());
+                            }
+                        }
+
                         HashMap<String, String> filtered = new HashMap<>();
                         filtered.put("nome", map.get("nome"));
                         filtered.put("cpf", map.get("cpf"));
@@ -64,7 +72,6 @@ public class CAFCredentialHtmlGeneratorServiceImpl implements HtmlGeneratorServi
                 } else if (key.equals("areas")) {
                     String input = data.get(key);
 
-                    // Pattern to extract each map { ... }
                     Pattern mapPattern = Pattern.compile("\\{([^}]+)}");
                     Matcher mapMatcher = mapPattern.matcher(input);
 
@@ -74,14 +81,22 @@ public class CAFCredentialHtmlGeneratorServiceImpl implements HtmlGeneratorServi
                         String mapContent = mapMatcher.group(1);
                         HashMap<String, String> map = new HashMap<>();
 
-                        // Pattern to extract key=value pairs
-                        Pattern pairPattern = Pattern.compile("(\\w+)=([^,]+)(?:,|$)");
-                        Matcher pairMatcher = pairPattern.matcher(mapContent);
+                        // Try JSON format
+                        Pattern jsonPattern = Pattern.compile("\"(\\w+)\"\\s*:\\s*\"([^\"]*)\"");
+                        Matcher jsonMatcher = jsonPattern.matcher(mapContent);
+                        boolean foundJson = false;
+                        while (jsonMatcher.find()) {
+                            map.put(jsonMatcher.group(1).trim(), jsonMatcher.group(2).trim());
+                            foundJson = true;
+                        }
 
-                        while (pairMatcher.find()) {
-                            String matcherKey = pairMatcher.group(1).trim();
-                            String value = pairMatcher.group(2).trim();
-                            map.put(matcherKey, value);
+                        // Fallback: key=value
+                        if (!foundJson) {
+                            Pattern pairPattern = Pattern.compile("(\\w+)=([^,]+)(?:,|$)");
+                            Matcher pairMatcher = pairPattern.matcher(mapContent);
+                            while (pairMatcher.find()) {
+                                map.put(pairMatcher.group(1).trim(), pairMatcher.group(2).trim());
+                            }
                         }
 
                         HashMap<String, String> filtered = new HashMap<>();
@@ -108,7 +123,7 @@ public class CAFCredentialHtmlGeneratorServiceImpl implements HtmlGeneratorServi
                         mergedHtml = mergedHtml.replace("REPLACEME-->municipio", entry.get("municipio") != null ? entry.get("municipio") : "-");
                     }
                     mergedHtml = mergedHtml.replace("REPLACEME-->" + key, html.toString());
-                } else if (key.equals("cnpjEntidade")) {
+                } else if (key.equals("cnpjEntidade") || key.equals("cnpj")) {
                     mergedHtml = mergedHtml.replace("REPLACEME-->" + key, formatCnpj(data.get(key)));
                 } else{
                     mergedHtml = mergedHtml.replaceAll("REPLACEME-->" + key, data.get(key));
