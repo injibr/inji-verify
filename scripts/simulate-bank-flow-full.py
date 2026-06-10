@@ -12,7 +12,7 @@ Uso:
   python simulate-bank-flow-full.py [credencial1] [credencial2]
   python simulate-bank-flow-full.py ALL
 
-Credenciais disponíveis: CAFCredential, CARDocument, CCIRCredential, ECACredential
+Credenciais disponíveis: CAFCredential, CARDocument, CCIRCredential, ECACredential, CARReceipt
 """
 import sys, json, base64, hashlib, secrets, time, os
 import urllib.parse, urllib.request, urllib.error
@@ -63,6 +63,7 @@ CREDENTIAL_MAP = {
     "CARDocument":    ("MGI",   "CARDocument",    "https://www.w3.org/ns/credentials/v2"),
     "CCIRCredential": ("INCRA", "CCIRCredential", "https://www.w3.org/ns/credentials/v2"),
     "ECACredential":  ("MGI",   "ECACredential",  "https://www.w3.org/ns/credentials/v2"),
+    "CARReceipt":  ("MGI",   "CARReceipt",  "https://www.w3.org/ns/credentials/v2"),
 }
 
 if len(sys.argv) < 2:

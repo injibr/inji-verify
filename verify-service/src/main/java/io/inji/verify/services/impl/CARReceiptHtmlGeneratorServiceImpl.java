@@ -280,61 +280,12 @@ public class CARReceiptHtmlGeneratorServiceImpl implements HtmlGeneratorService 
     }
 
     public byte[] getQrCodeBytes(String codigoImovel) {
-        try {
-            String qrUrl = "https://www.car.gov.br/#/consultar/" + (codigoImovel != null ? codigoImovel : "");
-            String url = "https://api.qrserver.com/v1/create-qr-code/?data=" +
-                    java.net.URLEncoder.encode(qrUrl, "UTF-8") + "&size=60x60&format=png";
-
-            // Using default SSL context
-            
-
-            java.net.http.HttpClient client = java.net.http.HttpClient.newBuilder()
-                    .connectTimeout(java.time.Duration.ofSeconds(5))
-                    
-                    .build();
-            java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder()
-                    .uri(java.net.URI.create(url))
-                    .timeout(java.time.Duration.ofSeconds(10))
-                    .GET()
-                    .build();
-            java.net.http.HttpResponse<byte[]> response = client.send(request, java.net.http.HttpResponse.BodyHandlers.ofByteArray());
-
-            if (response.statusCode() == 200) {
-                return response.body();
-            }
-            return null;
-        } catch (Exception e) {
-            return null;
-        }
+        String qrUrl = "https://www.car.gov.br/#/consultar/" + (codigoImovel != null ? codigoImovel : "");
+        return io.inji.verify.utils.QrCodeGenerator.generatePng(qrUrl, 60);
     }
 
     private String fetchQrCodeBase64(String text, int size) {
-        try {
-            String url = "https://api.qrserver.com/v1/create-qr-code/?data=" +
-                    java.net.URLEncoder.encode(text, "UTF-8") + "&size=" + size + "x" + size + "&format=png";
-
-            // Using default SSL context
-            
-
-            java.net.http.HttpClient client = java.net.http.HttpClient.newBuilder()
-                    .connectTimeout(java.time.Duration.ofSeconds(5))
-                    
-                    .build();
-            java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder()
-                    .uri(java.net.URI.create(url))
-                    .timeout(java.time.Duration.ofSeconds(10))
-                    .GET()
-                    .build();
-            java.net.http.HttpResponse<byte[]> response = client.send(request, java.net.http.HttpResponse.BodyHandlers.ofByteArray());
-
-            if (response.statusCode() == 200) {
-                return java.util.Base64.getEncoder().encodeToString(response.body());
-            }
-            return null;
-        } catch (Exception e) {
-            log.warn("Could not generate QR code", e);
-            return null;
-        }
+        return io.inji.verify.utils.QrCodeGenerator.generateBase64(text, size);
     }
 
     private byte[] fetchSingleTile(int zoom, int x, int y) {

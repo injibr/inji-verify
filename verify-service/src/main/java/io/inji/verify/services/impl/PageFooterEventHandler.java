@@ -60,9 +60,9 @@ public class PageFooterEventHandler {
             if (qrCodeBytes != null) {
                 try {
                     Image qrImage = new Image(ImageDataFactory.create(qrCodeBytes));
-                    qrImage.setFixedPosition(pageSize.getRight() - 78, y);
-                    qrImage.setWidth(50);
-                    qrImage.setHeight(50);
+                    qrImage.setFixedPosition(pageSize.getRight() - 78, y + 3);
+                    qrImage.setWidth(45);
+                    qrImage.setHeight(45);
                     try (Canvas canvas = new Canvas(pdfCanvas, pageSize)) {
                         canvas.add(qrImage);
                     }

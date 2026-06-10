@@ -136,10 +136,10 @@ public class CAFCredentialHtmlGeneratorServiceImpl implements HtmlGeneratorServi
         }
 
         // Generate QR Code
-        try {
-            String qrCodeBase64 = generateQrCodeBase64("https://caf.mda.gov.br/consulta-publica/ufpa", 80);
-            mergedHtml = mergedHtml.replace("REPLACEME-->qrCode", "<img src=\"data:image/png;base64," + qrCodeBase64 + "\" width=\"80\" height=\"80\" />");
-        } catch (Exception e) {
+        String qrCodeBase64 = io.inji.verify.utils.QrCodeGenerator.generateBase64("https://caf.mda.gov.br/consulta-publica/ufpa", 100);
+        if (qrCodeBase64 != null) {
+            mergedHtml = mergedHtml.replace("REPLACEME-->qrCode", "<img src=\"data:image/png;base64," + qrCodeBase64 + "\" width=\"100\" height=\"100\" />");
+        } else {
             mergedHtml = mergedHtml.replace("REPLACEME-->qrCode", "");
         }
 
@@ -180,22 +180,5 @@ public class CAFCredentialHtmlGeneratorServiceImpl implements HtmlGeneratorServi
         return value;
     }
 
-    private String generateQrCodeBase64(String text, int size) throws Exception {
-        String url = "https://api.qrserver.com/v1/create-qr-code/?data=" + java.net.URLEncoder.encode(text, "UTF-8") + "&size=" + size + "x" + size + "&format=png";
 
-        java.net.http.HttpClient client = java.net.http.HttpClient.newBuilder()
-                .connectTimeout(java.time.Duration.ofSeconds(5))
-                .build();
-        java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder()
-                .uri(java.net.URI.create(url))
-                .timeout(java.time.Duration.ofSeconds(10))
-                .GET()
-                .build();
-        java.net.http.HttpResponse<byte[]> response = client.send(request, java.net.http.HttpResponse.BodyHandlers.ofByteArray());
-
-        if (response.statusCode() == 200) {
-            return java.util.Base64.getEncoder().encodeToString(response.body());
-        }
-        throw new RuntimeException("Failed to generate QR code: " + response.statusCode());
-    }
 }
