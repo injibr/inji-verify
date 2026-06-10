@@ -30,7 +30,15 @@ load_env(os.path.join(SCRIPTS_DIR, ".env"))
 
 WIREMOCK_URL = os.environ.get("WIREMOCK_URL", "")
 WIREMOCK_KEY = os.environ.get("WIREMOCK_KEY", "")
-OUTPUT_DIR   = os.environ.get("OUTPUT_DIR") or os.path.join(os.path.expanduser("~"), "Desktop")
+def _default_output_dir():
+    home = os.path.expanduser("~")
+    for name in ("Desktop", "Área de Trabalho"):
+        candidate = os.path.join(home, name)
+        if os.path.isdir(candidate):
+            return candidate
+    return home
+
+OUTPUT_DIR = os.environ.get("OUTPUT_DIR") or _default_output_dir()
 MARKER_FILE  = os.path.join(SCRIPTS_DIR, ".last_webhook_id")
 
 if not WIREMOCK_URL:
@@ -71,19 +79,28 @@ def extract_pdfs(request_data):
     boundary = ("--" + m.group(1)).encode()
     saved = 0
     for i, part in enumerate(body.split(boundary)):
-        if b"filename" not in part:
-            continue
-        fm = re.search(rb'filename="([^"]+)"', part)
-        fname = fm.group(1).decode() if fm else f"parte_{i}.bin"
         idx_body = part.find(b"\r\n\r\n")
         if idx_body < 0:
             continue
-        pdf_data = re.sub(rb"--$", b"", part[idx_body+4:].rstrip(b"\r\n-"))
-        out = os.path.join(OUTPUT_DIR, fname)
-        with open(out, "wb") as f:
-            f.write(pdf_data)
-        print(f"Salvo: {out} ({len(pdf_data)} bytes)")
-        saved += 1
+        content = re.sub(rb"--$", b"", part[idx_body+4:].rstrip(b"\r\n-"))
+        if b"filename" in part:
+            fm = re.search(rb'filename="([^"]+)"', part)
+            fname = fm.group(1).decode() if fm else f"parte_{i}.bin"
+            out = os.path.join(OUTPUT_DIR, fname)
+            with open(out, "wb") as f:
+                f.write(content)
+            print(f"Salvo PDF: {out} ({len(content)} bytes)")
+            saved += 1
+        elif b"application/json" in part or b"Content-Disposition" in part:
+            try:
+                data = json.loads(content)
+                fname = f"webhook_result_{webhook_id[:8]}.json"
+                out = os.path.join(OUTPUT_DIR, fname)
+                with open(out, "w", encoding="utf-8") as f:
+                    json.dump(data, f, indent=2, ensure_ascii=False)
+                print(f"Salvo JSON: {out}")
+            except Exception:
+                pass
     if saved == 0:
         print("Nenhum PDF encontrado.")
     return saved
