@@ -1,4 +1,4 @@
-FROM eclipse-temurin:25.0.1_8-jre-alpine
+FROM registry-ctn.prevnet/library/eclipse-temurin:25-jre-alpine
 
 ARG SOURCE
 ARG COMMIT_HASH
