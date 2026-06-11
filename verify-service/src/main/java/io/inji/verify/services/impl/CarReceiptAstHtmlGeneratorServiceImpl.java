@@ -23,6 +23,11 @@ public class CarReceiptAstHtmlGeneratorServiceImpl implements HtmlGeneratorServi
                 .toList();
         for (String key : sortedKeys) {
             try {
+                String rawValue = data.get(key);
+                if (rawValue != null && rawValue.matches("\\$\\{.+}")) {
+                    mergedHtml = mergedHtml.replace("REPLACEME-->" + key, "-");
+                    continue;
+                }
                 if (key.equals("proprietarios")) {
                     String input = data.get(key);
 

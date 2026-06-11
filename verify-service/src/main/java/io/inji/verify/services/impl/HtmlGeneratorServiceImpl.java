@@ -16,10 +16,14 @@ public class HtmlGeneratorServiceImpl implements HtmlGeneratorService {
         String mergedHtml = getCredentialSupportedTemplateString(issuerId, credentialType);
         for (String key : data.keySet()) {
             try {
-                mergedHtml = mergedHtml.replaceAll("REPLACEME-->" + key, data.get(key));
+                String value = data.get(key);
+                if (value != null && value.matches("\\$\\{.+}")) {
+                    mergedHtml = mergedHtml.replaceAll("REPLACEME-->" + key, "-");
+                } else {
+                    mergedHtml = mergedHtml.replaceAll("REPLACEME-->" + key, value);
+                }
             } catch (IllegalArgumentException ex) {
                 log.error("Error while replacing key in template {}", key);
-                // If there's an error (e.g., special characters in the value), remove the placeholder
                 mergedHtml = mergedHtml.replaceAll("REPLACEME-->" + key, "");
             }
         }

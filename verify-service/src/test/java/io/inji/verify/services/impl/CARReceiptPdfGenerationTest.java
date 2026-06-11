@@ -35,8 +35,8 @@ class CARReceiptPdfGenerationTest {
 
         String html = htmlGenerator.replaceAndGetHtml(credentialMap, issuerId, credentialType);
 
-        assertTrue(html.contains("CHÁCARA BOA ESPERANÇA"));
-        assertTrue(html.contains("Trizidela do Vale"));
+        assertTrue(html.contains("SITIO MORADA NOVA"));
+        assertTrue(html.contains("Alto Santo"));
 
         // First pass: generate PDF
         ByteArrayOutputStream pdfOutput = new ByteArrayOutputStream();

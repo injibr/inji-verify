@@ -74,6 +74,11 @@ public class CCIRCredentialHtmlGeneratorServiceImpl implements HtmlGeneratorServ
         String mergedHtml = getCredentialSupportedTemplateString(issuerId, credentialType);
         for (String key : data.keySet()) {
             try {
+                String rawValue = data.get(key);
+                if (rawValue != null && rawValue.matches("\\$\\{.+}")) {
+                    mergedHtml = mergedHtml.replace("REPLACEME-->" + key, "-");
+                    continue;
+                }
                 if (key.equals("titulares")) {
                     String input = data.get(key);
                     List<Map<String, String>> resultList = mapper.readValue(input, new TypeReference<>() {});

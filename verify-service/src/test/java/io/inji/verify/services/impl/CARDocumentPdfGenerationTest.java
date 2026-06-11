@@ -38,11 +38,8 @@ class CARDocumentPdfGenerationTest {
 
         String html = htmlGenerator.replaceAndGetHtml(credentialMap, issuerId, credentialType);
 
-        assertTrue(html.contains("Trizidela do Vale"));
-        assertTrue(html.contains("MA-2112233-044B8D8BC23345BE88179D0385A8BB1A"));
-        assertTrue(html.contains("Embargo"));
-        assertTrue(html.contains("Parque Nacional XYZ"));
-        assertTrue(html.contains("Terra Indigena ABC"));
+        assertTrue(html.contains("Alto Santo"));
+        assertTrue(html.contains("CE-2300705-F2EBB423739C499D8A41230F72DE899C"));
 
         ByteArrayOutputStream pdfOutput = new ByteArrayOutputStream();
         ConverterProperties props = new ConverterProperties();

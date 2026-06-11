@@ -14,6 +14,8 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static java.util.Objects.isNull;
+
 @Slf4j
 @Service("CARDocumentHtmlGeneratorServiceImpl")
 public class CARDocumentHtmlGeneratorServiceImpl implements HtmlGeneratorService {
@@ -61,6 +63,13 @@ public class CARDocumentHtmlGeneratorServiceImpl implements HtmlGeneratorService
                 .toList();
         for (String key : sortedKeys) {
             try {
+                String rawValue = data.get(key);
+                if (rawValue != null && rawValue.matches("\\$\\{.+}")) {
+                    if (!key.equals("sobreposicoesAreasEmbargadas") && !key.equals("sobreposicoesUnidadeConservacao") && !key.equals("sobreposicoesTerraIndigena")) {
+                        mergedHtml = mergedHtml.replace("REPLACEME-->" + key, "-");
+                    }
+                    continue;
+                }
                 if (key.equals("sobreposicoesAreasEmbargadas") || key.equals("sobreposicoesUnidadeConservacao") || key.equals("sobreposicoesTerraIndigena")) {
                     String input = data.get(key);
 
@@ -145,9 +154,23 @@ public class CARDocumentHtmlGeneratorServiceImpl implements HtmlGeneratorService
                 mergedHtml = mergedHtml.replace("REPLACEME-->" + key, "");
             }
         }
+        // Check if all sobreposicoes are null/placeholder — if so, remove the entire section
+        boolean allSobreposicoesNull = true;
         for (String mk : multiKeys) {
-            if (!data.containsKey(mk)) {
-                mergedHtml = mergedHtml.replace("REPLACEME-->" + mk, "");
+            String val = data.get(mk);
+            if (val != null && !val.matches("\\$\\{.+}")) {
+                allSobreposicoesNull = false;
+                break;
+            }
+        }
+        if (allSobreposicoesNull) {
+            mergedHtml = mergedHtml.replaceAll("(?s)<!--BEGIN_SOBREPOSICOES-->.*?<!--END_SOBREPOSICOES-->", "");
+        } else {
+            for (String mk : multiKeys) {
+                String val = data.get(mk);
+                if (val == null || val.matches("\\$\\{.+}")) {
+                    mergedHtml = mergedHtml.replace("REPLACEME-->" + mk, "");
+                }
             }
         }
         mergedHtml = mergedHtml.replace("REPLACEME-->dataGeracao",

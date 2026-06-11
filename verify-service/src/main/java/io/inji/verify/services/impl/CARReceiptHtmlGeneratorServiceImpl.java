@@ -77,7 +77,7 @@ public class CARReceiptHtmlGeneratorServiceImpl implements HtmlGeneratorService 
         for (String key : sortedKeys) {
             try {
                 String value = data.get(key);
-                if (value == null || value.equals("null")) {
+                if (value == null || value.equals("null") || value.matches("\\$\\{.+}")) {
                     mergedHtml = mergedHtml.replace("REPLACEME-->" + key, "-");
                 } else if (key.equals("proprietarios")) {
                     mergedHtml = mergedHtml.replace("REPLACEME-->" + key, buildProprietariosHtml(value));
