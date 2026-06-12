@@ -21,9 +21,45 @@ class CARDocumentPdfGenerationTest {
     private final CARDocumentHtmlGeneratorServiceImpl htmlGenerator = new CARDocumentHtmlGeneratorServiceImpl();
 
     @Test
-    void shouldParseAndGeneratePdfWithSobreposicoes() throws Exception {
+    void shouldGeneratePdfFromSample() throws Exception {
+        String html = generateHtmlFromSample("car-document-credential-sample.json");
+
+        assertTrue(html.contains("Canutama"));
+        assertTrue(html.contains("AM-1300904-0B225E133A9848CDAC3C9A1A5EA27673"));
+        // Todos os campos de sobreposição são nulos, seção deve ser removida
+        assertFalse(html.contains("BEGIN_SOBREPOSICOES"));
+
+        writePdf(html, "MGI-CARDocument.pdf");
+    }
+
+    @Test
+    void shouldGeneratePdfFromSampleSobreposicao() throws Exception {
+        String html = generateHtmlFromSample("car-document-credential-sample-sobreposicao.json");
+
+        assertTrue(html.contains("Canutama"));
+        assertTrue(html.contains("AM-1300904-0B225E133A9848CDAC3C9A1A5EA27673"));
+        assertTrue(html.contains("Embargo"));
+        assertTrue(html.contains("Unidade de Conserva"));
+        // Tabela deve estar presente com as 3 sobreposições
+        assertTrue(html.contains("BEGIN_SOBREPOSICOES"));
+
+        writePdf(html, "MGI-CARDocument-sobreposicao.pdf");
+    }
+
+    @Test
+    void shouldGeneratePdfFromSample1Sobreposicao() throws Exception {
+        String html = generateHtmlFromSample("car-document-credential-sample-1-sobreposicao.json");
+
+        assertTrue(html.contains("Canutama"));
+        assertTrue(html.contains("AM-1300904-0B225E133A9848CDAC3C9A1A5EA27673"));
+        assertTrue(html.contains("Unidade de Conserva"));
+
+        writePdf(html, "MGI-CARDocument-1-sobreposicao.pdf");
+    }
+
+    private String generateHtmlFromSample(String sampleFile) throws Exception {
         String vc = new String(
-                getClass().getClassLoader().getResourceAsStream("car-document-credential-sample.json").readAllBytes()
+                getClass().getClassLoader().getResourceAsStream(sampleFile).readAllBytes()
         );
 
         Map<String, String> credentialMap = vcParserService.extractCredentialSubject(vc, 0);
@@ -32,15 +68,11 @@ class CARDocumentPdfGenerationTest {
 
         assertEquals("MGI", issuerId);
         assertEquals("CARDocument", credentialType);
-        assertTrue(credentialMap.containsKey("sobreposicoesAreasEmbargadas"));
-        assertTrue(credentialMap.containsKey("sobreposicoesUnidadeConservacao"));
-        assertTrue(credentialMap.containsKey("sobreposicoesTerraIndigena"));
 
-        String html = htmlGenerator.replaceAndGetHtml(credentialMap, issuerId, credentialType);
+        return htmlGenerator.replaceAndGetHtml(credentialMap, issuerId, credentialType);
+    }
 
-        assertTrue(html.contains("Alto Santo"));
-        assertTrue(html.contains("CE-2300705-F2EBB423739C499D8A41230F72DE899C"));
-
+    private void writePdf(String html, String fileName) throws Exception {
         ByteArrayOutputStream pdfOutput = new ByteArrayOutputStream();
         ConverterProperties props = new ConverterProperties();
         props.setFontProvider(new DefaultFontProvider(true, false, false));
@@ -48,7 +80,7 @@ class CARDocumentPdfGenerationTest {
 
         assertTrue(pdfOutput.size() > 0);
 
-        Path outputPath = Path.of(System.getProperty("user.dir"), "MGI-CARDocument.pdf");
+        Path outputPath = Path.of(System.getProperty("user.dir"), fileName);
         Files.write(outputPath, pdfOutput.toByteArray());
         assertTrue(new File(outputPath.toString()).exists());
         System.out.println("PDF gerado: " + outputPath);

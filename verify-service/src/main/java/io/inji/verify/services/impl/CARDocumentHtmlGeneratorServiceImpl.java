@@ -73,34 +73,53 @@ public class CARDocumentHtmlGeneratorServiceImpl implements HtmlGeneratorService
                 if (key.equals("sobreposicoesAreasEmbargadas") || key.equals("sobreposicoesUnidadeConservacao") || key.equals("sobreposicoesTerraIndigena")) {
                     String input = data.get(key);
 
-                    // Pattern to extract each map { ... }
-                    Pattern mapPattern = Pattern.compile("\\{([^}]+)}");
-                    Matcher mapMatcher = mapPattern.matcher(input);
-
                     ArrayList<HashMap<String, String>> resultList = new ArrayList<>();
 
-                    while (mapMatcher.find()) {
-                        String mapContent = mapMatcher.group(1);
-                        HashMap<String, String> map = new HashMap<>();
-
-                        Pattern pairPattern = Pattern.compile("(\\w+)=([^,]+)(?:,|$)");
-                        Matcher pairMatcher = pairPattern.matcher(mapContent);
-
-                        while (pairMatcher.find()) {
-                            String matcherKey = pairMatcher.group(1).trim();
-                            String value = pairMatcher.group(2).trim();
-                            map.put(matcherKey, value);
+                    // Try JSON array format first
+                    if (input.trim().startsWith("[")) {
+                        try {
+                            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                            java.util.List<Map<String, Object>> list = mapper.readValue(input, new com.fasterxml.jackson.core.type.TypeReference<>() {});
+                            for (Map<String, Object> item : list) {
+                                HashMap<String, String> filtered = new HashMap<>();
+                                filtered.put("tema", item.getOrDefault("tema", "").toString());
+                                filtered.put("fase", item.getOrDefault("fase", "-").toString());
+                                filtered.put("descricao", item.getOrDefault("descricao", "").toString());
+                                filtered.put("processamento", item.getOrDefault("processamento", "").toString());
+                                filtered.put("areaSobreposicao", item.getOrDefault("areaSobreposicao", "").toString());
+                                filtered.put("percentualSobreposicao", item.getOrDefault("percentualSobreposicao", "").toString());
+                                resultList.add(filtered);
+                            }
+                        } catch (Exception e) {
+                            log.error("Error parsing JSON sobreposicoes for key {}", key, e);
                         }
+                    } else {
+                        // Fallback: key=value format
+                        Pattern mapPattern = Pattern.compile("\\{([^}]+)}");
+                        Matcher mapMatcher = mapPattern.matcher(input);
 
-                        // Extract only nome and cpfCnpj
-                        HashMap<String, String> filtered = new HashMap<>();
-                        filtered.put("tema", Objects.isNull(map.get("tema"))?"":map.get("tema"));
-                        filtered.put("fase", Objects.isNull(map.get("fase"))?"-":map.get("fase"));
-                        filtered.put("descricao", Objects.isNull(map.get("descricao"))?"":map.get("descricao"));
-                        filtered.put("processamento", Objects.isNull(map.get("processamento"))?"":map.get("processamento"));
-                        filtered.put("areaSobreposicao",Objects.isNull(map.get("areaSobreposicao"))?"":map.get("areaSobreposicao"));
-                        filtered.put("percentualSobreposicao",Objects.isNull(map.get("percentualSobreposicao"))?"":map.get("percentualSobreposicao"));
-                        resultList.add(filtered);
+                        while (mapMatcher.find()) {
+                            String mapContent = mapMatcher.group(1);
+                            HashMap<String, String> map = new HashMap<>();
+
+                            Pattern pairPattern = Pattern.compile("(\\w+)=([^,]+)(?:,|$)");
+                            Matcher pairMatcher = pairPattern.matcher(mapContent);
+
+                            while (pairMatcher.find()) {
+                                String matcherKey = pairMatcher.group(1).trim();
+                                String value = pairMatcher.group(2).trim();
+                                map.put(matcherKey, value);
+                            }
+
+                            HashMap<String, String> filtered = new HashMap<>();
+                            filtered.put("tema", Objects.isNull(map.get("tema"))?"":map.get("tema"));
+                            filtered.put("fase", Objects.isNull(map.get("fase"))?"-":map.get("fase"));
+                            filtered.put("descricao", Objects.isNull(map.get("descricao"))?"":map.get("descricao"));
+                            filtered.put("processamento", Objects.isNull(map.get("processamento"))?"":map.get("processamento"));
+                            filtered.put("areaSobreposicao",Objects.isNull(map.get("areaSobreposicao"))?"":map.get("areaSobreposicao"));
+                            filtered.put("percentualSobreposicao",Objects.isNull(map.get("percentualSobreposicao"))?"":map.get("percentualSobreposicao"));
+                            resultList.add(filtered);
+                        }
                     }
 
                     StringBuilder html = new StringBuilder();
