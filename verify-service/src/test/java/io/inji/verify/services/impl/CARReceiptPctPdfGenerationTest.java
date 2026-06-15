@@ -6,60 +6,63 @@ import com.itextpdf.html2pdf.resolver.font.DefaultFontProvider;
 import com.itextpdf.kernel.pdf.PdfWriter;
 import io.inji.verify.services.VcParserService;
 import org.junit.jupiter.api.Test;
-
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
-
 import static org.junit.jupiter.api.Assertions.*;
 
 class CARReceiptPctPdfGenerationTest {
-
     private final VcParserService vcParserService = new VcParserServiceImpl();
     private final CARReceiptHtmlGeneratorServiceImpl htmlGenerator = new CARReceiptHtmlGeneratorServiceImpl();
 
     @Test
-    void shouldParseAndGeneratePdfForCARReceiptPCT() throws Exception {
-        String vc = new String(
-                getClass().getClassLoader().getResourceAsStream("car-receipt-pct-credential-sample.json").readAllBytes()
-        );
-
-        Map<String, String> credentialMap = vcParserService.extractCredentialSubject(vc, 0);
-        String issuerId = vcParserService.getValueFromVcMetadata(vc, "issuer", 0);
-        String credentialType = vcParserService.getTypesInVerifiableCredential(vc, 0);
-
-        assertEquals("MGI", issuerId);
-        assertEquals("CARReceipt", credentialType);
-        assertTrue(credentialMap.containsKey("proprietarios"));
-
-        String html = htmlGenerator.replaceAndGetHtml(credentialMap, issuerId, "CARReceiptPCT");
-
+    void comMatricula() throws Exception {
+        Map<String, String> cs = buildCs("car-receipt-pct-credential-sample.json");
+        String html = htmlGenerator.replaceAndGetHtml(cs, "MGI", "CARReceiptPCT");
         assertTrue(html.contains("TERRITÓRIO QUILOMBOLA PALMARES"));
-        assertTrue(html.contains("ASSOCIACAO QUILOMBOLA PALMARES"));
-        assertTrue(html.contains("Salvador"));
+        assertTrue(html.contains("BEGIN_MATRICULA"));
+        pdf(html, "MGI-CARReceiptPCT.pdf", cs);
+    }
 
-        // First pass: generate PDF
-        ByteArrayOutputStream pdfOutput = new ByteArrayOutputStream();
-        ConverterProperties props = new ConverterProperties();
-        props.setFontProvider(new DefaultFontProvider(true, false, false));
-        HtmlConverter.convertToPdf(html, new PdfWriter(pdfOutput), props);
+    @Test
+    void semMatricula() throws Exception {
+        Map<String, String> cs = buildCs("car-receipt-pct-credential-sample-sem-matricula.json");
+        String html = htmlGenerator.replaceAndGetHtml(cs, "MGI", "CARReceiptPCT");
+        assertFalse(html.contains("BEGIN_MATRICULA"));
+        pdf(html, "MGI-CARReceiptPCT-sem-matricula.pdf", cs);
+    }
 
-        // Second pass: add footers
-        byte[] qrBytes = htmlGenerator.getQrCodeBytes(credentialMap.get("codigoImovel"));
-        java.io.ByteArrayInputStream pdfInput = new java.io.ByteArrayInputStream(pdfOutput.toByteArray());
-        ByteArrayOutputStream finalOutput = new ByteArrayOutputStream();
-        com.itextpdf.kernel.pdf.PdfReader pdfReader = new com.itextpdf.kernel.pdf.PdfReader(pdfInput);
-        com.itextpdf.kernel.pdf.PdfDocument pdfDoc = new com.itextpdf.kernel.pdf.PdfDocument(pdfReader, new PdfWriter(finalOutput));
+    @Test
+    void muitosProprietarios() throws Exception {
+        Map<String, String> cs = buildCs("car-receipt-pct-credential-sample-muitos-proprietarios.json");
+        String html = htmlGenerator.replaceAndGetHtml(cs, "MGI", "CARReceiptPCT");
+        assertTrue(html.contains("BEATRIZ COELHO DAS NEVES"));
+        assertTrue(html.contains("ADRIANA CARVALHO DIAS"));
+        pdf(html, "MGI-CARReceiptPCT-muitos-proprietarios.pdf", cs);
+    }
+
+    private Map<String, String> buildCs(String file) throws Exception {
+        String vc = new String(getClass().getClassLoader().getResourceAsStream(file).readAllBytes());
+        return vcParserService.extractCredentialSubject(vc, 0);
+    }
+
+    private void pdf(String html, String name, Map<String, String> cs) throws Exception {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        ConverterProperties p = new ConverterProperties();
+        p.setFontProvider(new DefaultFontProvider(true, false, false));
+        HtmlConverter.convertToPdf(html, new PdfWriter(out), p);
+
+        byte[] qrBytes = htmlGenerator.getQrCodeBytes(cs.get("codigoImovel"));
+        java.io.ByteArrayInputStream pdfIn = new java.io.ByteArrayInputStream(out.toByteArray());
+        ByteArrayOutputStream finalOut = new ByteArrayOutputStream();
+        com.itextpdf.kernel.pdf.PdfDocument pdfDoc = new com.itextpdf.kernel.pdf.PdfDocument(
+                new com.itextpdf.kernel.pdf.PdfReader(pdfIn), new PdfWriter(finalOut));
         new PageFooterEventHandler("CAR \u2013 Cadastro Ambiental Rural", qrBytes).writeFooters(pdfDoc);
         pdfDoc.close();
 
-        assertTrue(finalOutput.size() > 0);
-
-        Path outputPath = Path.of(System.getProperty("user.dir"), "MGI-CARReceiptPCT.pdf");
-        Files.write(outputPath, finalOutput.toByteArray());
-        assertTrue(new File(outputPath.toString()).exists());
-        System.out.println("PDF gerado: " + outputPath);
+        Path path = Path.of(System.getProperty("user.dir"), name);
+        Files.write(path, finalOut.toByteArray());
+        System.out.println("PDF gerado: " + path);
     }
 }

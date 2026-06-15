@@ -30,38 +30,50 @@ public class CarReceiptAstHtmlGeneratorServiceImpl implements HtmlGeneratorServi
                 }
                 if (key.equals("proprietarios")) {
                     String input = data.get(key);
-
-                    // Pattern to extract each map { ... }
-                    Pattern mapPattern = Pattern.compile("\\{([^}]+)}");
-                    Matcher mapMatcher = mapPattern.matcher(input);
-
                     ArrayList<HashMap<String, String>> resultList = new ArrayList<>();
 
-                    while (mapMatcher.find()) {
-                        String mapContent = mapMatcher.group(1);
-                        HashMap<String, String> map = new HashMap<>();
-
-                        // Pattern to extract key=value pairs
-                        Pattern pairPattern = Pattern.compile("(\\w+)=([^,]+)(?:,|$)");
-                        Matcher pairMatcher = pairPattern.matcher(mapContent);
-
-                        while (pairMatcher.find()) {
-                            String matcherKey = pairMatcher.group(1).trim();
-                            String value = pairMatcher.group(2).trim();
-                            map.put(matcherKey, value);
+                    // Try JSON array format first
+                    boolean parsed = false;
+                    if (input.trim().startsWith("[")) {
+                        try {
+                            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                            java.util.List<Map<String, Object>> list = mapper.readValue(input, new com.fasterxml.jackson.core.type.TypeReference<>() {});
+                            for (Map<String, Object> item : list) {
+                                HashMap<String, String> filtered = new HashMap<>();
+                                filtered.put("cpfCnpj", String.valueOf(item.getOrDefault("cpfCnpj", "-")));
+                                filtered.put("nome", String.valueOf(item.getOrDefault("nome", "-")));
+                                resultList.add(filtered);
+                            }
+                            parsed = true;
+                        } catch (Exception e) {
+                            log.debug("Not valid JSON, falling back to key=value format");
                         }
+                    }
 
-                        // Extract only nome and cpfCnpj
-                        HashMap<String, String> filtered = new HashMap<>();
-                        filtered.put("nome", map.get("nome"));
-                        filtered.put("cpfCnpj", map.get("cpfCnpj"));
-                        resultList.add(filtered);
+                    if (!parsed) {
+                        Pattern mapPattern = Pattern.compile("\\{([^}]+)}");
+                        Matcher mapMatcher = mapPattern.matcher(input);
+                        while (mapMatcher.find()) {
+                            String mapContent = mapMatcher.group(1);
+                            HashMap<String, String> map = new HashMap<>();
+                            Pattern pairPattern = Pattern.compile("(\\w+)=([^,}]+)");
+                            Matcher pairMatcher = pairPattern.matcher(mapContent);
+                            while (pairMatcher.find()) {
+                                map.put(pairMatcher.group(1).trim(), pairMatcher.group(2).trim());
+                            }
+                            HashMap<String, String> filtered = new HashMap<>();
+                            filtered.put("nome", map.get("nome"));
+                            filtered.put("cpfCnpj", map.get("cpfCnpj"));
+                            resultList.add(filtered);
+                        }
                     }
 
                     StringBuilder html = new StringBuilder();
                     for (HashMap<String, String> entry : resultList) {
+                        String cpf = entry.get("cpfCnpj") != null ? entry.get("cpfCnpj") : "-";
+                        String docLabel = cpf.replaceAll("\\D", "").length() == 14 ? "CNPJ" : "CPF";
                         html.append("    <tr>\n");
-                        html.append("        <td colspan=\"3\">CPF: ").append(entry.get("cpfCnpj")).append("</td>\n");
+                        html.append("        <td colspan=\"3\">").append(docLabel).append(": ").append(cpf).append("</td>\n");
                         html.append("        <td colspan=\"3\">Nome: ").append(entry.get("nome")).append("</td>\n");
                         html.append("    </tr>\n");
                     }
@@ -74,6 +86,21 @@ public class CarReceiptAstHtmlGeneratorServiceImpl implements HtmlGeneratorServi
                 mergedHtml = mergedHtml.replace("REPLACEME-->" + key, "");
             }
         }
+
+        // Remove matrícula section if all fields are null
+        String[] matriculaKeys = {"matricula", "dataMatricula", "livroMatricula", "folhaMatricula"};
+        boolean allMatriculaNull = true;
+        for (String mk : matriculaKeys) {
+            String val = data.get(mk);
+            if (val != null && !val.equals("null") && !val.matches("\\$\\{.+}")) {
+                allMatriculaNull = false;
+                break;
+            }
+        }
+        if (allMatriculaNull) {
+            mergedHtml = mergedHtml.replaceAll("(?s)<!--BEGIN_MATRICULA-->.*?<!--END_MATRICULA-->", "");
+        }
+
         return mergedHtml;
     }
 }

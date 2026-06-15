@@ -121,23 +121,59 @@ public class CARReceiptHtmlGeneratorServiceImpl implements HtmlGeneratorService 
             pageNum++;
         }
 
+        // Remove matrícula section if all fields are null
+        String[] matriculaKeys = {"matricula", "dataMatricula", "livroMatricula", "folhaMatricula"};
+        boolean allMatriculaNull = true;
+        for (String mk : matriculaKeys) {
+            String val = data.get(mk);
+            if (val != null && !val.equals("null") && !val.matches("\\$\\{.+}")) {
+                allMatriculaNull = false;
+                break;
+            }
+        }
+        if (allMatriculaNull) {
+            mergedHtml = mergedHtml.replaceAll("(?s)<!--BEGIN_MATRICULA-->.*?<!--END_MATRICULA-->", "");
+        }
+
         return mergedHtml;
     }
 
     private String buildProprietariosHtml(String input) {
-        Pattern mapPattern = Pattern.compile("\\{([^}]+)}");
-        Matcher mapMatcher = mapPattern.matcher(input);
-
         ArrayList<HashMap<String, String>> resultList = new ArrayList<>();
-        while (mapMatcher.find()) {
-            String mapContent = mapMatcher.group(1);
-            HashMap<String, String> map = new HashMap<>();
-            Pattern pairPattern = Pattern.compile("(\\w+)=([^,}]+)");
-            Matcher pairMatcher = pairPattern.matcher(mapContent);
-            while (pairMatcher.find()) {
-                map.put(pairMatcher.group(1).trim(), pairMatcher.group(2).trim());
+
+        // Try JSON array format first
+        boolean parsed = false;
+        if (input.trim().startsWith("[")) {
+            try {
+                com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                java.util.List<Map<String, Object>> list = mapper.readValue(input, new com.fasterxml.jackson.core.type.TypeReference<>() {});
+                for (Map<String, Object> item : list) {
+                    HashMap<String, String> map = new HashMap<>();
+                    map.put("cpfCnpj", String.valueOf(item.getOrDefault("cpfCnpj", "-")));
+                    map.put("nome", String.valueOf(item.getOrDefault("nome", "-")));
+                    resultList.add(map);
+                }
+                parsed = true;
+            } catch (Exception e) {
+                log.debug("Not valid JSON, falling back to key=value format");
             }
-            resultList.add(map);
+        }
+
+        if (!parsed) {
+            // Fallback: key=value format
+            Pattern mapPattern = Pattern.compile("\\{([^}]+)}");
+            Matcher mapMatcher = mapPattern.matcher(input);
+
+            while (mapMatcher.find()) {
+                String mapContent = mapMatcher.group(1);
+                HashMap<String, String> map = new HashMap<>();
+                Pattern pairPattern = Pattern.compile("(\\w+)=([^,}]+)");
+                Matcher pairMatcher = pairPattern.matcher(mapContent);
+                while (pairMatcher.find()) {
+                    map.put(pairMatcher.group(1).trim(), pairMatcher.group(2).trim());
+                }
+                resultList.add(map);
+            }
         }
 
         StringBuilder html = new StringBuilder();
