@@ -8,6 +8,9 @@ import io.inji.verify.dto.submission.VPTokenResultDto;
 import io.inji.verify.enums.VPResultStatus;
 import io.mosip.vercred.vcverifier.data.VerificationStatus;
 import io.inji.verify.exception.BankWebHookException;
+import io.inji.verify.enums.ErrorCode;
+import io.inji.verify.exception.ClientIdNonceException;
+import io.inji.verify.exception.InvalidVpTokenException;
 import io.inji.verify.exception.VPRequestNotFoundException;
 import io.inji.verify.models.VpRequest;
 import io.inji.verify.services.VPProcessService;
@@ -112,6 +115,10 @@ public class VPProcessController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorDto(e.getErrorCode()));
         } catch (BankWebHookException e) {
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body("Bank webhook failed: " + e.getMessage());
+        } catch (ClientIdNonceException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorDto(e.getErrorCode()));
+        } catch (InvalidVpTokenException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorDto(ErrorCode.INVALID_VP_TOKEN));
         } catch (Exception e) {
             log.error("Unexpected error occurred", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Unexpected server error");

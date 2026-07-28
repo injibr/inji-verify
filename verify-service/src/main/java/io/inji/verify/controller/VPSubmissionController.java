@@ -5,6 +5,10 @@ import java.util.Map;
 import java.util.Set;
 
 import com.nimbusds.jose.shaded.gson.JsonSyntaxException;
+import io.inji.verify.dto.core.ErrorDto;
+import io.inji.verify.enums.ErrorCode;
+import io.inji.verify.exception.ClientIdNonceException;
+import io.inji.verify.exception.InvalidVpTokenException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -92,6 +96,10 @@ public class VPSubmissionController {
                 return ResponseEntity.status(HttpStatus.OK).body(response);
             } catch (JsonSyntaxException e) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("INVALID_PRESENTATION_SUBMISSION");
+            } catch (ClientIdNonceException e) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorDto(e.getErrorCode()));
+            } catch (InvalidVpTokenException e) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorDto(ErrorCode.INVALID_VP_TOKEN));
             }
         }
     }

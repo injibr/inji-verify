@@ -10,11 +10,13 @@ import io.inji.verify.dto.verification.ExpiryCheckDto;
 import io.inji.verify.dto.verification.VCVerificationResultDto;
 import io.inji.verify.dto.verification.SchemaAndSignatureCheckDto;
 import io.inji.verify.dto.verification.VCVerificationRequestDto;
+import io.inji.verify.enums.ErrorCode;
 import io.inji.verify.enums.KBJwtErrorCodes;
 import io.inji.verify.enums.VPResultStatus;
 import io.inji.verify.exception.*;
 import io.inji.verify.models.AuthorizationRequestCreateResponse;
 import io.inji.verify.models.VPSubmission;
+import io.inji.verify.repository.AuthorizationRequestCreateResponseRepository;
 import io.inji.verify.repository.VPSubmissionRepository;
 import io.inji.verify.services.VerifiablePresentationSubmissionService;
 import io.inji.verify.shared.Constants;
@@ -30,6 +32,7 @@ import org.json.JSONObject;
 import org.json.JSONTokener;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import java.util.List;
 import java.util.Map;
 import java.util.ArrayList;
@@ -46,6 +49,7 @@ public class VerifiablePresentationSubmissionServiceImpl implements VerifiablePr
     @Value("${inji.verify.claims-with-meta-data}")
     List<String> claimsWithMetaData;
 
+    final AuthorizationRequestCreateResponseRepository authorizationRequestCreateResponseRepository;
     final VPSubmissionRepository vpSubmissionRepository;
     final CredentialsVerifier credentialsVerifier;
     final PresentationVerifier presentationVerifier;
@@ -53,17 +57,53 @@ public class VerifiablePresentationSubmissionServiceImpl implements VerifiablePr
     final VCVerificationServiceImpl vcVerificationService;
     final PixelPass pixelPass;
 
-    public VerifiablePresentationSubmissionServiceImpl(VPSubmissionRepository vpSubmissionRepository, CredentialsVerifier credentialsVerifier, PresentationVerifier presentationVerifier, VerifiablePresentationRequestServiceImpl verifiablePresentationRequestService, VCVerificationServiceImpl vcVerificationService, PixelPass pixelPass) {
+    public VerifiablePresentationSubmissionServiceImpl(VPSubmissionRepository vpSubmissionRepository, CredentialsVerifier credentialsVerifier, PresentationVerifier presentationVerifier, VerifiablePresentationRequestServiceImpl verifiablePresentationRequestService, VCVerificationServiceImpl vcVerificationService, PixelPass pixelPass, AuthorizationRequestCreateResponseRepository authorizationRequestCreateResponseRepository) {
         this.vpSubmissionRepository = vpSubmissionRepository;
         this.credentialsVerifier = credentialsVerifier;
         this.presentationVerifier = presentationVerifier;
         this.verifiablePresentationRequestService = verifiablePresentationRequestService;
         this.vcVerificationService = vcVerificationService;
         this.pixelPass = pixelPass;
+        this.authorizationRequestCreateResponseRepository = authorizationRequestCreateResponseRepository;
     }
 
     @Override
     public void submit(VPSubmissionDto vpSubmissionDto) {
+        // INJIBR-CUSTOM: patch baseado na upstream — validando nonce and clientId antes de salvar
+        // prevents replay attack: a VP token signed for one session cannot be used in another
+        if (vpSubmissionDto.getVpToken() != null && vpSubmissionDto.getError() == null) {
+            AuthorizationRequestCreateResponse authRequest = authorizationRequestCreateResponseRepository
+                    .findById(vpSubmissionDto.getState()).orElse(null);
+            if (authRequest != null && authRequest.getAuthorizationDetails() != null
+                    && !authRequest.getAuthorizationDetails().isAcceptVPWithoutHolderProof()) {
+                log.info("Validating nonce and clientId for state: {}", vpSubmissionDto.getState());
+                String nonce = authRequest.getAuthorizationDetails().getNonce();
+                String clientId = authRequest.getAuthorizationDetails().getClientId();
+                for (JSONObject jsonVPToken : extractTokens(vpSubmissionDto.getVpToken()).getJsonVpTokens()) {
+                    JSONObject proof = jsonVPToken.optJSONObject("proof");
+                    if (proof == null) {
+                        log.warn("VP proof is missing for state: {}", vpSubmissionDto.getState());
+                        throw new ClientIdNonceException(ErrorCode.CLIENT_ID_NONCE_VALIDATION_FAILED);
+                    }
+                    String challenge = proof.optString("challenge", null);
+                    String domain = proof.optString("domain", null);
+                    if (!StringUtils.hasText(challenge) || !StringUtils.hasText(domain)) {
+                        log.warn("VP proof missing challenge or domain for state: {}", vpSubmissionDto.getState());
+                        throw new ClientIdNonceException(ErrorCode.CLIENT_ID_NONCE_VALIDATION_FAILED);
+                    }
+                    if (!nonce.equals(challenge)) {
+                        log.warn("Nonce mismatch for state: {} — expected: {} got: {}", vpSubmissionDto.getState(), nonce, challenge);
+                        throw new ClientIdNonceException(ErrorCode.NONCE_VALIDATION_FAILED);
+                    }
+                    if (!clientId.equals(domain)) {
+                        log.warn("ClientId mismatch for state: {} — expected: {} got: {}", vpSubmissionDto.getState(), clientId, domain);
+                        throw new ClientIdNonceException(ErrorCode.CLIENT_ID_VALIDATION_FAILED);
+                    }
+                }
+                log.info("Nonce and clientId validation passed for state: {}", vpSubmissionDto.getState());
+            }
+        }
+        // INJIBR-CUSTOM: fim do patch
         vpSubmissionRepository.save(new VPSubmission(vpSubmissionDto.getState(), vpSubmissionDto.getVpToken(), vpSubmissionDto.getPresentationSubmission(), vpSubmissionDto.getError(), vpSubmissionDto.getErrorDescription()));
         verifiablePresentationRequestService.invokeVpRequestStatusListener(vpSubmissionDto.getState());
     }
