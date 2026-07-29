@@ -14,8 +14,8 @@ import java.util.regex.Pattern;
 @Service("CAFCredentialHtmlGeneratorServiceImpl")
 public class CAFCredentialHtmlGeneratorServiceImpl implements HtmlGeneratorService {
     @Override
-    public String replaceAndGetHtml(Map<String, String> data, String issuerId, String credentialType) {
-        String mergedHtml = getCredentialSupportedTemplateString(issuerId, credentialType);
+    public String replaceAndGetHtml(Map<String, String> data, String credentialType) {
+        String mergedHtml = getCredentialSupportedTemplateString(credentialType);
         for (String key : data.keySet()) {
             try {
                 String rawValue = data.get(key);

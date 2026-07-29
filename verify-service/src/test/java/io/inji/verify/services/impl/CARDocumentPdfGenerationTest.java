@@ -63,13 +63,11 @@ class CARDocumentPdfGenerationTest {
         );
 
         Map<String, String> credentialMap = vcParserService.extractCredentialSubject(vc, 0);
-        String issuerId = vcParserService.getValueFromVcMetadata(vc, "issuer", 0);
         String credentialType = vcParserService.getTypesInVerifiableCredential(vc, 0);
 
-        assertEquals("MGI", issuerId);
         assertEquals("CARDocument", credentialType);
 
-        return htmlGenerator.replaceAndGetHtml(credentialMap, issuerId, credentialType);
+        return htmlGenerator.replaceAndGetHtml(credentialMap, credentialType);
     }
 
     private void writePdf(String html, String fileName) throws Exception {

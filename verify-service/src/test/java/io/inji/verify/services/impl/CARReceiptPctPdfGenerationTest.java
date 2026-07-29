@@ -19,7 +19,7 @@ class CARReceiptPctPdfGenerationTest {
     @Test
     void comMatricula() throws Exception {
         Map<String, String> cs = buildCs("car-receipt-pct-credential-sample.json");
-        String html = htmlGenerator.replaceAndGetHtml(cs, "MGI", "CARReceiptPCT");
+        String html = htmlGenerator.replaceAndGetHtml(cs, "CARReceiptPCT");
         assertTrue(html.contains("TERRITÓRIO QUILOMBOLA PALMARES"));
         assertTrue(html.contains("BEGIN_MATRICULA"));
         pdf(html, "MGI-CARReceiptPCT.pdf", cs);
@@ -28,7 +28,7 @@ class CARReceiptPctPdfGenerationTest {
     @Test
     void semMatricula() throws Exception {
         Map<String, String> cs = buildCs("car-receipt-pct-credential-sample-sem-matricula.json");
-        String html = htmlGenerator.replaceAndGetHtml(cs, "MGI", "CARReceiptPCT");
+        String html = htmlGenerator.replaceAndGetHtml(cs, "CARReceiptPCT");
         assertFalse(html.contains("BEGIN_MATRICULA"));
         pdf(html, "MGI-CARReceiptPCT-sem-matricula.pdf", cs);
     }
@@ -36,7 +36,7 @@ class CARReceiptPctPdfGenerationTest {
     @Test
     void muitosProprietarios() throws Exception {
         Map<String, String> cs = buildCs("car-receipt-pct-credential-sample-muitos-proprietarios.json");
-        String html = htmlGenerator.replaceAndGetHtml(cs, "MGI", "CARReceiptPCT");
+        String html = htmlGenerator.replaceAndGetHtml(cs, "CARReceiptPCT");
         assertTrue(html.contains("BEATRIZ COELHO DAS NEVES"));
         assertTrue(html.contains("ADRIANA CARVALHO DIAS"));
         pdf(html, "MGI-CARReceiptPCT-muitos-proprietarios.pdf", cs);

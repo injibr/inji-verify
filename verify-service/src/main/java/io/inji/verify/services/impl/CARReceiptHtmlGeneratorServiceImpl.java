@@ -69,8 +69,8 @@ public class CARReceiptHtmlGeneratorServiceImpl implements HtmlGeneratorService 
     }
 
     @Override
-    public String replaceAndGetHtml(Map<String, String> data, String issuerId, String credentialType) {
-        String mergedHtml = getCredentialSupportedTemplateString(issuerId, credentialType);
+    public String replaceAndGetHtml(Map<String, String> data, String credentialType) {
+        String mergedHtml = getCredentialSupportedTemplateString(credentialType);
         List<String> sortedKeys = data.keySet().stream()
                 .sorted(Comparator.comparingInt(String::length).reversed())
                 .toList();

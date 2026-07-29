@@ -27,16 +27,14 @@ class CAFCredentialPdfGenerationTest {
         );
 
         Map<String, String> credentialMap = vcParserService.extractCredentialSubject(vc, 0);
-        String issuerId = vcParserService.getValueFromVcMetadata(vc, "issuer", 0);
         String credentialType = vcParserService.getTypesInVerifiableCredential(vc, 0);
 
-        assertEquals("MDA", issuerId);
         assertEquals("CAFCredential", credentialType);
         assertTrue(credentialMap.containsKey("membros"));
         assertTrue(credentialMap.containsKey("areas"));
         assertTrue(credentialMap.get("membros").contains("USUARIO CAF TESTE"));
 
-        String html = htmlGenerator.replaceAndGetHtml(credentialMap, issuerId, credentialType);
+        String html = htmlGenerator.replaceAndGetHtml(credentialMap, credentialType);
 
         assertFalse(html.contains("REPLACEME-->membros"));
         assertTrue(html.contains("USUARIO CAF TESTE"));

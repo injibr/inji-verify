@@ -27,14 +27,12 @@ class CCIRCredentialPdfGenerationTest {
         );
 
         Map<String, String> credentialMap = vcParserService.extractCredentialSubject(vc, 0);
-        String issuerId = vcParserService.getValueFromVcMetadata(vc, "issuer", 0);
         String credentialType = vcParserService.getTypesInVerifiableCredential(vc, 0);
 
-        assertEquals("INCRA", issuerId);
         assertEquals("CCIRCredential", credentialType);
         assertTrue(credentialMap.containsKey("titulares"));
 
-        String html = htmlGenerator.replaceAndGetHtml(credentialMap, issuerId, credentialType);
+        String html = htmlGenerator.replaceAndGetHtml(credentialMap, credentialType);
 
         assertFalse(html.contains("REPLACEME-->titulares"));
         // Verifica que os titulares do sample foram renderizados
