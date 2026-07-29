@@ -1,7 +1,5 @@
 automata {
 
-    skipHom = true
-
     build.agent.image = 'library/maven:3.9-eclipse-temurin-21'
 
     gitOps.provider = 'GIT_INFRA'
