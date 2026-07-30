@@ -12,8 +12,8 @@ import java.util.Map;
 @Primary
 public class HtmlGeneratorServiceImpl implements HtmlGeneratorService {
     @Override
-    public String replaceAndGetHtml(Map<String, String> data, String issuerId, String credentialType) {
-        String mergedHtml = getCredentialSupportedTemplateString(issuerId, credentialType);
+    public String replaceAndGetHtml(Map<String, String> data, String credentialType) {
+        String mergedHtml = getCredentialSupportedTemplateString(credentialType);
         for (String key : data.keySet()) {
             try {
                 String value = data.get(key);

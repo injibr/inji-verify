@@ -47,7 +47,7 @@ public class PdfServiceImpl implements PdfService {
      * @param credentialType the type of the credential
      * @return a ByteArrayInputStream containing the generated PDF
      */
-    private ByteArrayInputStream renderPdf(Map<String, String> data, String issuerId, String credentialType) {
+    private ByteArrayInputStream renderPdf(Map<String, String> data, String credentialType) {
         try {
             String htmlGeneratorType;
             if (!Objects.isNull(data.get("tipoImovel")) && data.get("tipoImovel").equals("AST")){
@@ -67,7 +67,7 @@ public class PdfServiceImpl implements PdfService {
             }
 
             String html = htmlGeneratorFactory.getHtmlGeneratorService(htmlGeneratorType)
-                    .replaceAndGetHtml(data, issuerId, credentialType);
+                    .replaceAndGetHtml(data, credentialType);
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
             PdfWriter pdfwriter = new PdfWriter(outputStream);
@@ -111,7 +111,6 @@ public class PdfServiceImpl implements PdfService {
     @Override
     public Map<String, ByteArrayInputStream> generatePdf(String vc) {
         Map<String, String> credentialMap;
-        String issuerId;
         String credentialType;
         int totalVCs;
         Map<String, ByteArrayInputStream> pdfStreams = new HashMap<>();
@@ -124,14 +123,13 @@ public class PdfServiceImpl implements PdfService {
         for (int i = 0; i < totalVCs; i++) {
             try {
                 credentialMap = vcParserService.extractCredentialSubject(vc, i);
-                issuerId = vcParserService.getValueFromVcMetadata(vc, "issuer", i);
                 credentialType = vcParserService.getTypesInVerifiableCredential(vc, i);
             } catch (JsonProcessingException ex) {
                 log.error("Error while parsing vc", ex);
                 throw new PdfParseException();
             }
-            if (!Objects.isNull(credentialMap) && !Objects.isNull(issuerId) && !Objects.isNull(credentialType)) {
-                pdfStreams.put(credentialType, renderPdf(credentialMap, issuerId, credentialType));
+            if (!Objects.isNull(credentialMap) && !Objects.isNull(credentialType)) {
+                pdfStreams.put(credentialType, renderPdf(credentialMap, credentialType));
             } else {
                 log.error("Error while generating pdf");
                 throw new PdfGenerationException();

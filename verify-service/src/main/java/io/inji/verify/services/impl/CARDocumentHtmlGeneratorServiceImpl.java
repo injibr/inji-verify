@@ -51,13 +51,13 @@ public class CARDocumentHtmlGeneratorServiceImpl implements HtmlGeneratorService
     }
 
     @Override
-    public String replaceAndGetHtml(Map<String, String> data, String issuerId, String credentialType) {
+    public String replaceAndGetHtml(Map<String, String> data, String credentialType) {
         String[] multiKeys = {
                 "sobreposicoesAreasEmbargadas",
                 "sobreposicoesUnidadeConservacao",
                 "sobreposicoesTerraIndigena"
         };
-        String mergedHtml = getCredentialSupportedTemplateString(issuerId, credentialType);
+        String mergedHtml = getCredentialSupportedTemplateString(credentialType);
         List<String> sortedKeys = data.keySet().stream()
                 .sorted(Comparator.comparingInt(String::length).reversed())
                 .toList();

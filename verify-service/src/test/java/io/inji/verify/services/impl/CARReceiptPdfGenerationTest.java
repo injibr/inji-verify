@@ -48,7 +48,7 @@ class CARReceiptPdfGenerationTest {
     }
 
     private String buildHtml(Map<String, String> cs) throws Exception {
-        return htmlGenerator.replaceAndGetHtml(cs, "MGI", "CARReceipt");
+        return htmlGenerator.replaceAndGetHtml(cs, "CARReceipt");
     }
 
     private void pdf(String html, String name, Map<String, String> cs) throws Exception {

@@ -399,12 +399,7 @@ verifiable_credentials = []
 descriptor_map = []
 
 for i, ct in enumerate(credential_types):
-    issuer_id, doc_type, context_url = CREDENTIAL_MAP[ct]
-    raw_vc = issued_credentials[ct]
-    vc_element = dict(raw_vc)
-    vc_element["vcMetadata"] = {"issuer": issuer_id, "credentialType": doc_type}
-    vc_element["verifiableCredential"] = {"credential": raw_vc}
-    verifiable_credentials.append(json.dumps(vc_element))
+    verifiable_credentials.append(issued_credentials[ct])
     descriptor_map.append({
         "id": "id card credential",
         "format": "ldp_vp",
