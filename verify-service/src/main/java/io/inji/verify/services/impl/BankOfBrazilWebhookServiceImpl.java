@@ -142,7 +142,20 @@ public class BankOfBrazilWebhookServiceImpl implements BankWebhookService {
                 MultipartEntityBuilder builder = MultipartEntityBuilder.create();
 
                 ObjectMapper mapper = new ObjectMapper();
-                String resultsJson = mapper.writeValueAsString(result);
+                JsonNode resultNode = mapper.valueToTree(result);
+                if (resultNode.has("vcResults")) {
+                    for (JsonNode vcResult : resultNode.get("vcResults")) {
+                        if (vcResult.has("vc") && vcResult.get("vc").isTextual()) {
+                            try {
+                                JsonNode parsedVc = mapper.readTree(vcResult.get("vc").asText());
+                                ((com.fasterxml.jackson.databind.node.ObjectNode) vcResult).set("vc", parsedVc);
+                            } catch (Exception e) {
+                                log.warn("Failed to parse vc field as JSON, sending as escaped string: {}", e.getMessage());
+                            }
+                        }
+                    }
+                }
+                String resultsJson = mapper.writeValueAsString(resultNode);
 
                 builder.addPart("results",
                         new StringBody(resultsJson, ContentType.APPLICATION_JSON));
