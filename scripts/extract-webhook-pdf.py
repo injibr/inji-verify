@@ -64,20 +64,22 @@ def fetch_by_id(webhook_id):
             chunks.append(chunk)
         return json.loads(b"".join(chunks))
 
-def extract_pdfs(request_data):
-    """Extrai e salva PDFs do body multipart."""
+def extract_pdfs(request_data, webhook_id):
+    """Extrai e salva PDFs e JSON do body multipart."""
     body_b64 = request_data.get("bodyAsBase64", "")
     ct = request_data.get("headers", {}).get("Content-Type", "")
     if not body_b64:
         print("Body vazio.")
         return 0
     body = base64.b64decode(body_b64)
+
     m = re.search(r"boundary=([^\s;\"]+)", ct)
     if not m:
         print("Body nao e multipart.")
         return 0
     boundary = ("--" + m.group(1)).encode()
     saved = 0
+    part_idx = 0
     for i, part in enumerate(body.split(boundary)):
         idx_body = part.find(b"\r\n\r\n")
         if idx_body < 0:
@@ -91,16 +93,21 @@ def extract_pdfs(request_data):
                 f.write(content)
             print(f"Salvo PDF: {out} ({len(content)} bytes)")
             saved += 1
-        elif b"application/json" in part or b"Content-Disposition" in part:
+        elif content.strip():
             try:
                 data = json.loads(content)
-                fname = f"webhook_result_{webhook_id[:8]}.json"
+                fname = f"webhook_result_{webhook_id[:8]}_{part_idx}.json"
                 out = os.path.join(OUTPUT_DIR, fname)
                 with open(out, "w", encoding="utf-8") as f:
                     json.dump(data, f, indent=2, ensure_ascii=False)
                 print(f"Salvo JSON: {out}")
             except Exception:
-                pass
+                fname = f"webhook_part_{webhook_id[:8]}_{part_idx}.txt"
+                out = os.path.join(OUTPUT_DIR, fname)
+                with open(out, "wb") as f:
+                    f.write(content)
+                print(f"Salvo parte raw: {out} ({len(content)} bytes)")
+            part_idx += 1
     if saved == 0:
         print("Nenhum PDF encontrado.")
     return saved
@@ -129,4 +136,4 @@ except Exception as e:
 
 req_data = full.get("request", full)
 print(f"ok ({req_data.get('loggedDateString', '')})")
-extract_pdfs(req_data)
+extract_pdfs(req_data, webhook_id)

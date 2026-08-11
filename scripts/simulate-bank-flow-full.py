@@ -44,9 +44,10 @@ if missing:
     print(f"Erro: variáveis não definidas no .env: {', '.join(missing)}")
     sys.exit(1)
 
-VERIFY_URL         = os.environ["VERIFY_URL"]
-WIREMOCK_URL       = os.environ["WIREMOCK_URL"]
-WIREMOCK_KEY       = os.environ["WIREMOCK_KEY"]
+VERIFY_URL            = os.environ["VERIFY_URL"]
+WIREMOCK_URL          = os.environ["WIREMOCK_URL"]
+WIREMOCK_INTERNAL_URL = os.environ.get("WIREMOCK_INTERNAL_URL", WIREMOCK_URL)
+WIREMOCK_KEY          = os.environ["WIREMOCK_KEY"]
 BANK_ID            = os.environ["BANK_ID"]
 BANK_SECRET        = os.environ["BANK_SECRET"]
 SSO_CLIENT_ID      = os.environ["SSO_CLIENT_ID"]
@@ -337,10 +338,10 @@ print(f"""
         INSERT INTO verify.bank_credentials
           (bank_id, bank_name, api_key, bank_secret, bank_webhook_url, bank_webhook_token_url, bank_webhook_uri, bank_webhook_token_uri)
         VALUES
-          ('{BANK_ID}', 'Bank Dev Test', 'test-key', '{BANK_SECRET}', '{WIREMOCK_URL}', '{WIREMOCK_URL}', '/bank/webhook', '/bank/oauth/token')
+          ('{BANK_ID}', 'Bank Dev Test', 'test-key', '{BANK_SECRET}', '{WIREMOCK_INTERNAL_URL}', '{WIREMOCK_INTERNAL_URL}', '/bank/webhook', '/bank/oauth/token')
         ON CONFLICT (bank_id) DO UPDATE SET
-          bank_webhook_url = '{WIREMOCK_URL}',
-          bank_webhook_token_url = '{WIREMOCK_URL}',
+          bank_webhook_url = '{WIREMOCK_INTERNAL_URL}',
+          bank_webhook_token_url = '{WIREMOCK_INTERNAL_URL}',
           bank_webhook_uri = '/bank/webhook',
           bank_webhook_token_uri = '/bank/oauth/token';
       "
