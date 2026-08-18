@@ -19,7 +19,7 @@
     <properties>
         <itextcore.version>8.0.3</itextcore.version>
         <itexthtml2pdf.version>5.0.3</itexthtml2pdf.version>
-        <itext.version>5.5.13</itext.version>
+        <itext.version>5.5.13.3</itext.version>
     </properties>
     <dependencies>
         <dependency>
